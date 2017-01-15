@@ -7,15 +7,25 @@
     <servlet>
       <servlet-name>jersey-servlet</servlet-name>
       <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
-     <!-- <init-param>
-        ...
-      </init-param>-->
       <init-param>
         <param-name>jersey.config.server.provider.packages<!--com.sun.jersey.config.property.packages--></param-name>
         <param-value>org.sem8.ds.rest</param-value>
       </init-param>
+      <init-param>
+        <param-name>jersey.api.json.POJOMappingFeature</param-name>
+        <param-value>true</param-value>
+      </init-param>
       <load-on-startup>1</load-on-startup>
     </servlet>
+
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath:spring.xml</param-value>
+  </context-param>
 
     <servlet-mapping>
       <servlet-name>jersey-servlet</servlet-name>
