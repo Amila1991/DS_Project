@@ -4,7 +4,8 @@ import org.sem8.ds.rest.resource.NodeResource;
 import org.sem8.ds.rest.resource.RegisterResponseResource;
 import org.sem8.ds.rest.resource.CommonResponseResource;
 import org.sem8.ds.services.exception.ServiceException;
-import org.sem8.ds.util.constant.NodeConstant;
+import org.sem8.ds.util.constant.NodeConstant.BootstrapRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.net.*;
@@ -21,7 +22,8 @@ public class BootstrapService {
 
     private DatagramSocket socket;
 
-    NodeService nodeService;
+    @Autowired
+    private NodeService nodeService;
 
     public void init() throws SocketException {
         socket = new DatagramSocket();
@@ -52,11 +54,11 @@ public class BootstrapService {
      * @return @RegisterResponseResource
      * @throws ServiceException
      */
-    public RegisterResponseResource register(NodeResource resource)  throws ServiceException{
+    public RegisterResponseResource register(NodeResource resource, String username)  throws ServiceException{
         RegisterResponseResource registerResResource = new RegisterResponseResource();
         registerResResource.setResponseType(ResponseType.REGOK);
-        String dataPacket = NodeConstant.NODE_REG + " " + resource.getIp() + " " + resource.getPort() + " "
-                + resource.getUsername() + " ";
+        String dataPacket = BootstrapRequest.NODE_REG + " " + resource.getIp() + " " + resource.getPort() + " "
+                + username + " ";
 
         sendMessage(dataPacket);
 
@@ -115,12 +117,12 @@ public class BootstrapService {
      * @return @CommonResponseResource
      * @throws ServiceException
      */
-    public CommonResponseResource Unregister(NodeResource resource) throws ServiceException {
+    public CommonResponseResource Unregister(NodeResource resource, String username) throws ServiceException {
         CommonResponseResource responseResource = new CommonResponseResource();
         responseResource.setResponseType(ResponseType.UNROK);
         responseResource.setErrorCode(9999);
-        String dataPacket = NodeConstant.NODE_UNREG + " " + resource.getIp() + " " + resource.getPort() + " "
-                + resource.getUsername() + " ";
+        String dataPacket = BootstrapRequest.NODE_UNREG + " " + resource.getIp() + " " + resource.getPort() + " "
+                + username + " ";
 
         sendMessage(dataPacket);
 

@@ -30,13 +30,10 @@ public class BootstrapController extends AbstractController {
     @Path("/register/{username}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response Register(@PathParam("username") String username) {
-        NodeResource resource = new NodeResource();
-        resource.setUsername(username);
-        resource.setIp(request.getServerName());
-        resource.setPort(request.getServerPort());
+        NodeResource resource = new NodeResource(request.getServerName(), request.getServerPort());
         System.out.println(resource.getIp() + " " + bootstrapService);
         try {
-            return Response.status(200).entity(bootstrapService.register(resource)).build();
+            return Response.status(200).entity(bootstrapService.register(resource, username)).build();
         } catch (ServiceException e) {
             return handleServiceException(e);
         }
@@ -46,13 +43,10 @@ public class BootstrapController extends AbstractController {
     @Path("/unregister/{username}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response Unregister(@PathParam("username") String username) {
-        NodeResource resource = new NodeResource();
-        resource.setUsername(username);
-        resource.setIp(request.getServerName());
-        resource.setPort(request.getServerPort());
+        NodeResource resource = new NodeResource(request.getServerName(), request.getServerPort());
         System.out.println(resource.getIp() + " " + bootstrapService);
         try {
-            return Response.status(200).entity(bootstrapService.Unregister(resource)).build();
+            return Response.status(200).entity(bootstrapService.Unregister(resource, username)).build();
         } catch (ServiceException e) {
             return handleServiceException(e);
         }
