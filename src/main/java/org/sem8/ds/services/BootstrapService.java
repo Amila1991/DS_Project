@@ -79,6 +79,9 @@ public class BootstrapService {
             throw new ServiceException("Message format isn't match - {}", responseSplit[0]);
         }
 
+        nodeService.setIp(resource.getIp());
+        nodeService.setPort(resource.getPort());
+
         int responseCode = Integer.parseInt(responseSplit[1]);
 
         switch (responseCode) {

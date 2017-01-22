@@ -29,7 +29,7 @@ public class BootstrapController extends AbstractController {
     @GET
     @Path("/register/{username}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response Register(@PathParam("username") String username) {
+    public Response register(@PathParam("username") String username) {
         NodeResource resource = new NodeResource(request.getServerName(), request.getServerPort());
         System.out.println(resource.getIp() + " " + bootstrapService);
         try {
@@ -42,7 +42,7 @@ public class BootstrapController extends AbstractController {
     @GET
     @Path("/unregister/{username}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response Unregister(@PathParam("username") String username) {
+    public Response unregister(@PathParam("username") String username) {
         NodeResource resource = new NodeResource(request.getServerName(), request.getServerPort());
         System.out.println(resource.getIp() + " " + bootstrapService);
         try {
