@@ -1,5 +1,6 @@
 package org.sem8.ds.rest.resource;
 
+import org.sem8.ds.model.Node;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,35 +10,10 @@ import java.util.List;
 public class RegisterResponseResource extends AbstractResponseResource {
     private int node_No;
     private List<Node> nodesList;
+    private String error;
 
     public RegisterResponseResource() {
         this.nodesList = new ArrayList<Node>();
-    }
-
-    public class Node{
-        private String ip;
-        private int port;
-
-        public Node(String ip, int port) {
-            this.ip = ip;
-            this.port = port;
-        }
-
-        public String getIp() {
-            return ip;
-        }
-
-        public void setIp(String ip) {
-            this.ip = ip;
-        }
-
-        public int getPort() {
-            return port;
-        }
-
-        public void setPort(int port) {
-            this.port = port;
-        }
     }
 
     public int getNode_No() {
@@ -52,8 +28,19 @@ public class RegisterResponseResource extends AbstractResponseResource {
         return nodesList;
     }
 
+    public void setNodesList(List<Node> nodesList) {
+        this.nodesList = nodesList;
+    }
+
     public void addNode(String ip, int port) {
         nodesList.add(new Node(ip, port));
+    }
 
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
     }
 }

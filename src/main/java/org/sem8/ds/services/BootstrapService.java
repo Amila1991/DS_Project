@@ -1,12 +1,13 @@
 package org.sem8.ds.services;
 
-import org.sem8.ds.rest.resource.NeighbourResource;
+import org.sem8.ds.rest.resource.NodeResource;
 import org.sem8.ds.rest.resource.RegisterResponseResource;
-import org.sem8.ds.rest.resource.UnregisterResponseResource;
+import org.sem8.ds.rest.resource.CommonResponseResource;
+import org.sem8.ds.services.exception.ServiceException;
+import org.sem8.ds.util.constant.NodeConstant;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.io.IOException;
+import java.net.*;
 
 import static org.sem8.ds.rest.resource.AbstractResponseResource.*;
 
@@ -15,78 +16,161 @@ import static org.sem8.ds.rest.resource.AbstractResponseResource.*;
  */
 public class BootstrapService {
 
-    private List<NeighbourResource> nodeList;
+    private String hostname;
+    private int port;
 
-    public void init() {
-        nodeList = new ArrayList<NeighbourResource>();
+    private DatagramSocket socket;
+
+    NodeService nodeService;
+
+    public void init() throws SocketException {
+        socket = new DatagramSocket();
     }
 
-    private RegisterResponseResource setResponseNodeList(RegisterResponseResource responseResource) {
-        if (nodeList.size() == 1) {
-            responseResource.setNode_No(1);
-            responseResource.addNode(nodeList.get(0).getIp(), nodeList.get(0).getPort());
-        } else if (nodeList.size() == 2) {
-            responseResource.setNode_No(2);
-            responseResource.addNode(nodeList.get(0).getIp(), nodeList.get(0).getPort());
-            responseResource.addNode(nodeList.get(1).getIp(), nodeList.get(1).getPort());
-        } else {
-            Random r = new Random();
-            int Low = 0;
-            int High = nodeList.size();
-            int random_1 = r.nextInt(High - Low) + Low;
-            int random_2 = r.nextInt(High - Low) + Low;
-            while (random_1 == random_2) {
-                random_2 = r.nextInt(High - Low) + Low;
-            }
-            echo(random_1 + " " + random_2);
-            responseResource.setNode_No(2);
-            responseResource.addNode(nodeList.get(random_1).getIp(), nodeList.get(random_1).getPort());
-            responseResource.addNode(nodeList.get(random_2).getIp(), nodeList.get(random_2).getPort());
+    private void addNeighbourNode(int noOfNode, String[] nodeList) {
+        for (int i = 1; i <= noOfNode; i++) {
+            nodeService.addNeighbourNode(nodeList[2 * i], Integer.parseInt(nodeList[2 * i + 1]));
         }
-
-        return responseResource;
     }
 
-    public RegisterResponseResource register(NeighbourResource resource) {
+    private void sendMessage(String dataPacket) throws ServiceException{
+        byte[] buffer = (String.format("%04d", dataPacket.length() + 5) + " " + dataPacket).getBytes();
+        try {
+            InetAddress ipAddress = InetAddress.getByName(hostname);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ipAddress, port);
+            socket.send(packet);
+        } catch (UnknownHostException e) {
+            throw new ServiceException(e.getMessage(), e);
+        } catch (IOException e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     *  send message to bootstrap server for node registation in bootstrap.
+     * @param resource @NodeResource
+     * @return @RegisterResponseResource
+     * @throws ServiceException
+     */
+    public RegisterResponseResource register(NodeResource resource)  throws ServiceException{
         RegisterResponseResource registerResResource = new RegisterResponseResource();
         registerResResource.setResponseType(ResponseType.REGOK);
+        String dataPacket = NodeConstant.NODE_REG + " " + resource.getIp() + " " + resource.getPort() + " "
+                + resource.getUsername() + " ";
 
-        if (nodeList.isEmpty()) {
-            registerResResource.setNode_No(0);
-            nodeList.add(resource);
-        } else {
-            if (nodeList.contains(resource)) {
-                if (resource.getUsername().equals(nodeList.get(nodeList.indexOf(resource)).getUsername())) {
-                    registerResResource.setNode_No(9998);
-                } else {
-                    registerResResource.setNode_No(9997);
-                }
-            } else {
-                setResponseNodeList(registerResResource);
-                nodeList.add(resource);
-            }
+        sendMessage(dataPacket);
+
+        byte[] buffer = new byte[65536];
+        DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+        try {
+            socket.receive(incoming);
+        } catch (IOException e) {
+            throw new ServiceException(e.getMessage());
         }
+
+        int length = Integer.parseInt(new String(incoming.getData(), 0, 4));
+        System.out.println(length);
+        String[] responseSplit = new String(incoming.getData(), 5, length - 5).split(" ");
+        if (!responseSplit[0].equals("REGOK")) {
+            if (responseSplit[0].equals("ERROR"))
+                throw new ServiceException("Message length error");
+            throw new ServiceException("Message format isn't match - {}", responseSplit[0]);
+        }
+
+        int responseCode = Integer.parseInt(responseSplit[1]);
+
+        switch (responseCode) {
+            case 0:
+                registerResResource.setNode_No(0);
+                break;
+            case 1:
+                registerResResource.setNode_No(1);
+                addNeighbourNode(1, responseSplit);
+                break;
+            case 2:
+                registerResResource.setNode_No(2);
+                addNeighbourNode(2, responseSplit);
+                break;
+            case 9999:
+                registerResResource.setError("Error 9999 – failed, there is some error in the command");
+                break;
+            case 9998:
+                registerResResource.setError("failed, already registered to you, unregister first");
+                break;
+            case 9997:
+                registerResResource.setError("failed, registered to another user, try a different IP and port");
+                break;
+            case 9996:
+                registerResResource.setError("Error 9996 – failed, can’t register. BS full");
+        }
+
+        registerResResource.setNodesList(nodeService.getNeighbourList());
+
         return registerResResource;
     }
 
-    public UnregisterResponseResource Unregister(NeighbourResource resource) {
-        UnregisterResponseResource responseResource = new UnregisterResponseResource();
+    /**
+     *  send message to bootstrap server for unregister node
+     * @param resource @NodeResource
+     * @return @CommonResponseResource
+     * @throws ServiceException
+     */
+    public CommonResponseResource Unregister(NodeResource resource) throws ServiceException {
+        CommonResponseResource responseResource = new CommonResponseResource();
         responseResource.setResponseType(ResponseType.UNROK);
         responseResource.setErrorCode(9999);
-        boolean isRemove = nodeList.remove(resource);
-        if (isRemove)
-            responseResource.setErrorCode(0);
+        String dataPacket = NodeConstant.NODE_UNREG + " " + resource.getIp() + " " + resource.getPort() + " "
+                + resource.getUsername() + " ";
 
-        for (NeighbourResource resource1 :
-                nodeList) {
-            System.out.println(resource1.getIp() + " " + resource1.getPort() + " " + resource1.getUsername());
+        sendMessage(dataPacket);
+
+        byte[] buffer = new byte[65536];
+        DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+        try {
+            socket.receive(incoming);
+        } catch (IOException e) {
+            throw new ServiceException(e.getMessage());
+        }
+
+        int length = Integer.parseInt(new String(incoming.getData(), 0, 4));
+        System.out.println(length);
+        String[] responseSplit = new String(incoming.getData(), 5, length - 5).split(" ");
+        if (!responseSplit[0].equals("UNROK")) {
+            if (responseSplit[0].equals("ERROR"))
+                throw new ServiceException("Message length error");
+            throw new ServiceException("Message format isn't match - {}", responseSplit[0]);
+        }
+
+        int responseCode = Integer.parseInt(responseSplit[1]);
+
+        if (responseCode == 0) {
+            responseResource.setErrorCode(0);
         }
 
         return responseResource;
     }
 
-    //simple function to echo data to terminal
-    public static void echo(String msg) {
-        System.out.println(msg);
+    public String getHostname() {
+        return hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public NodeService getNodeService() {
+        return nodeService;
+    }
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
     }
 }

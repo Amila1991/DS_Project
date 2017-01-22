@@ -1,15 +1,16 @@
-package org.sem8.ds.rest.resource;
-
+package org.sem8.ds.model;
 
 /**
- * @author amila karunathilaka
+ * @author amila karunathilaka.
  */
-
-public class NeighbourResource {
-
+public class Node {
     private String ip;
     private int port;
-    private String username;
+
+    public Node(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
 
     public String getIp() {
         return ip;
@@ -27,22 +28,14 @@ public class NeighbourResource {
         this.port = port;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        NeighbourResource that = (NeighbourResource) o;
+        Node node = (Node) o;
 
-        return port == that.port;
+        return port == node.port;
 
     }
 
