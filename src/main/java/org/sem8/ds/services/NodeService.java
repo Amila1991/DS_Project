@@ -1,9 +1,18 @@
 package org.sem8.ds.services;
 
-import org.sem8.ds.model.Node;
 import org.sem8.ds.rest.resource.CommonResponseResource;
+import org.sem8.ds.rest.resource.ExceptionMessageResource;
 import org.sem8.ds.rest.resource.NodeResource;
+import org.sem8.ds.services.exception.ServiceException;
+import org.sem8.ds.util.constant.NodeConstant;
+import org.sem8.ds.util.constant.NodeConstant.RestRequest;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,13 +26,10 @@ public class NodeService {
     private String ip;
     private int port;
     private String username;
-    private List<Node> neighbourList;
-
-
-
+    private List<NodeResource> neighbourList;
 
     public void init() throws SocketException {
-        neighbourList = new ArrayList<Node>();
+        neighbourList = new ArrayList<NodeResource>();
     }
 
     /**
@@ -31,25 +37,40 @@ public class NodeService {
      * @param resource
      * @return
      */
-    public CommonResponseResource receiveJoinNode(NodeResource resource) {
+    public CommonResponseResource receiveJoin(NodeResource resource) {
         CommonResponseResource responseResource = new CommonResponseResource();
         responseResource.setResponseType(ResponseType.JOINOK);
         responseResource.setErrorCode(0); // todo routingTable add error 9999
+
         return responseResource;
     }
 
-    /*public void sendJoinNode() {
-        List<NodeService> nodeList = nodeManagementService.getNodeList();
-        NodeResource resource = new NodeResource();
-        resource.setIp(ip);
-        resource.setPort(port);
-        for (Node node: neighbourList) {
-            if (nodeList.contains(new NodeService(node.getPort()))) {
-                nodeList.get(nodeList.indexOf(new NodeService(node.getPort()))).receiveJoinNode(resource); //// TODO: CommonResponseResource catch & maintain log
-            }
-        }
-    }*/
 
+    public CommonResponseResource sendJoin(NodeResource resource) throws ServiceException {
+        Client client = ClientBuilder.newClient();
+        String host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort();
+        WebTarget target = client.target(host).path(RestRequest.JOIN);
+
+        NodeResource node = new NodeResource(getIp(), getPort());
+        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
+                Entity.entity(node, MediaType.APPLICATION_JSON_TYPE));
+        CommonResponseResource responseResource = parseResponse(response, CommonResponseResource.class);
+
+        return responseResource;
+    }
+
+
+    private <T> T parseResponse(Response response, Class<T> entityType) throws ServiceException {
+        if (response == null) {
+            throw new ServiceException("response object is null");
+        }
+        if (response.getStatus() >= 200 && response.getStatus() < 300) {
+            return response.readEntity(entityType);
+        } else {
+            ExceptionMessageResource resource = response.readEntity(ExceptionMessageResource.class);
+            throw new ServiceException(resource.getMessage());
+        }
+    }
 
     public String getIp() {
         return ip;
@@ -75,12 +96,12 @@ public class NodeService {
         this.username = username;
     }
 
-    public List<Node> getNeighbourList() {
+    public List<NodeResource> getNeighbourList() {
         return neighbourList;
     }
 
     public void addNeighbourNode(String ip, int port) {
-        neighbourList.add(new Node(ip, port));
+        neighbourList.add(new NodeResource(ip, port));
     }
 
     @Override

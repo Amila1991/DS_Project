@@ -13,10 +13,7 @@
     <bean id="bootstrapService" class="org.sem8.ds.services.BootstrapService" init-method="init">
         <property name="hostname" value="localhost"/>
         <property name="port" value="55555"/>
-        <property name="nodeService" ref="nodeService"/>
     </bean>
-
-    <bean id="nodeManagementService" class="org.sem8.ds.services.NodeManagementService" init-method="init"/>
 
     <bean id="nodeService" class="org.sem8.ds.services.NodeService" init-method="init"/>
 

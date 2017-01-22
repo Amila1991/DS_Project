@@ -5,6 +5,15 @@ package org.sem8.ds.util.constant;
  */
 public class NodeConstant {
 
-    public static String NODE_REG = "REG";
-    public static String NODE_UNREG = "UNREG";
+    public static String PROTOCOL = "http://";
+
+    public static final class RestRequest {
+        public static final String JOIN = "/join";
+    }
+
+    public static final class BootstrapRequest {
+        public static final String NODE_REG = "REG";
+        public static final String NODE_UNREG = "UNREG";
+    }
+
 }

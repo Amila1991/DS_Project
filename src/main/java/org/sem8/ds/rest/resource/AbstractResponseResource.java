@@ -27,6 +27,12 @@ public abstract class AbstractResponseResource {
             public String toString() {
                 return "UNROK";
             }
+        },
+        JOINOK {
+            @Override
+            public String toString() {
+                return "UNROK";
+            }
         }
     }
 }
