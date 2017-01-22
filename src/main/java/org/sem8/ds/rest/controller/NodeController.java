@@ -27,11 +27,21 @@ public class NodeController extends AbstractController {
     @Path("/sendJoin")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response Register(NodeResource resource) {
+    public Response sendJoin(NodeResource resource) {
+        System.out.println(resource.getPort());
         try {
             return Response.status(200).entity(nodeService.sendJoin(resource)).build();
         } catch (ServiceException e) {
             return handleServiceException(e);
         }
+    }
+
+    @POST
+    @Path("/join")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response receiveJoin(NodeResource resource) {
+        System.out.println(resource.getPort());
+        return Response.status(200).entity(nodeService.receiveJoin(resource)).build();
     }
 }

@@ -5,7 +5,10 @@ package org.sem8.ds.util.constant;
  */
 public class NodeConstant {
 
-    public static String PROTOCOL = "http://";
+    public static final String PROTOCOL = "http://";
+    public static final String REST_API = "/rest";
+
+    public static final String NODE_SERVICE = "/node";
 
     public static final class RestRequest {
         public static final String JOIN = "/join";

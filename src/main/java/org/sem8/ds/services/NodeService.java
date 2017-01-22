@@ -33,6 +33,7 @@ public class NodeService {
     }
 
     /**
+     *
      * TODO : update routing table
      * @param resource
      * @return
@@ -45,11 +46,16 @@ public class NodeService {
         return responseResource;
     }
 
-
+    /**
+     *
+     * @param resource
+     * @return
+     * @throws ServiceException
+     */
     public CommonResponseResource sendJoin(NodeResource resource) throws ServiceException {
         Client client = ClientBuilder.newClient();
-        String host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort();
-        WebTarget target = client.target(host).path(RestRequest.JOIN);
+        String host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
+        WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.JOIN);
 
         NodeResource node = new NodeResource(getIp(), getPort());
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
@@ -68,7 +74,11 @@ public class NodeService {
             return response.readEntity(entityType);
         } else {
             ExceptionMessageResource resource = response.readEntity(ExceptionMessageResource.class);
-            throw new ServiceException(resource.getMessage());
+            if (resource != null) {
+                throw new ServiceException(resource.getMessage());
+            } else {
+                throw new ServiceException("response failed.....");
+            }
         }
     }
 
