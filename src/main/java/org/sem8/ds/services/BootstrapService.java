@@ -81,6 +81,7 @@ public class BootstrapService {
 
         nodeService.setIp(resource.getIp());
         nodeService.setPort(resource.getPort());
+        nodeService.setUsername(username);
 
         int responseCode = Integer.parseInt(responseSplit[1]);
 
@@ -97,15 +98,19 @@ public class BootstrapService {
                 addNeighbourNode(2, responseSplit);
                 break;
             case 9999:
+                registerResResource.setNode_No(9999);
                 registerResResource.setError("Error 9999 – failed, there is some error in the command");
                 break;
             case 9998:
+                registerResResource.setNode_No(9998);
                 registerResResource.setError("failed, already registered to you, unregister first");
                 break;
             case 9997:
+                registerResResource.setNode_No(9997);
                 registerResResource.setError("failed, registered to another user, try a different IP and port");
                 break;
             case 9996:
+                registerResResource.setNode_No(9996);
                 registerResResource.setError("Error 9996 – failed, can’t register. BS full");
         }
 
@@ -123,6 +128,8 @@ public class BootstrapService {
     public CommonResponseResource Unregister(NodeResource resource, String username) throws ServiceException {
         CommonResponseResource responseResource = new CommonResponseResource();
         responseResource.setResponseType(ResponseType.UNROK);
+        responseResource.setIp(resource.getIp());
+        responseResource.setPort(resource.getPort());
         responseResource.setErrorCode(9999);
         String dataPacket = BootstrapRequest.NODE_UNREG + " " + resource.getIp() + " " + resource.getPort() + " "
                 + username + " ";

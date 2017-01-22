@@ -34,25 +34,11 @@ public class NodeService {
 
     /**
      *
-     * TODO : update routing table
-     * @param resource
-     * @return
-     */
-    public CommonResponseResource receiveJoin(NodeResource resource) {
-        CommonResponseResource responseResource = new CommonResponseResource();
-        responseResource.setResponseType(ResponseType.JOINOK);
-        responseResource.setErrorCode(0); // todo routingTable add error 9999
-
-        return responseResource;
-    }
-
-    /**
-     *
      * @param resource
      * @return
      * @throws ServiceException
      */
-    public CommonResponseResource sendJoin(NodeResource resource) throws ServiceException {
+    public CommonResponseResource sendJoinRequest(NodeResource resource) throws ServiceException {
         Client client = ClientBuilder.newClient();
         String host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
         WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.JOIN);
@@ -60,7 +46,64 @@ public class NodeService {
         NodeResource node = new NodeResource(getIp(), getPort());
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
                 Entity.entity(node, MediaType.APPLICATION_JSON_TYPE));
-        CommonResponseResource responseResource = parseResponse(response, CommonResponseResource.class);
+
+        return parseResponse(response, CommonResponseResource.class);
+    }
+
+    public List<CommonResponseResource> sendJoinRequestAll() throws ServiceException {
+        List<CommonResponseResource> responseResourceList = new ArrayList<CommonResponseResource>();
+        for (NodeResource resource : neighbourList) {
+            responseResourceList.add(sendJoinRequest(resource));
+        }
+        return responseResourceList;
+
+    }
+
+    public CommonResponseResource sendLeaveRequest(NodeResource resource) throws ServiceException {
+        Client client = ClientBuilder.newClient();
+        String host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
+        WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.LEAVE);
+
+        NodeResource node = new NodeResource(getIp(), getPort());
+        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
+                Entity.entity(node, MediaType.APPLICATION_JSON_TYPE));
+
+        return parseResponse(response, CommonResponseResource.class);
+    }
+
+    public List<CommonResponseResource> sendLeaveRequestAll() throws ServiceException {
+        List<CommonResponseResource> responseResourceList = new ArrayList<CommonResponseResource>();
+        for (NodeResource resource :
+                neighbourList) {
+            responseResourceList.add(sendLeaveRequest(resource));
+        }
+        return responseResourceList;
+
+    }
+
+
+    /**
+     *
+     * TODO : update routing table
+     * @param resource
+     * @return
+     */
+    public CommonResponseResource receiveJoinRequest(NodeResource resource) {
+        CommonResponseResource responseResource = new CommonResponseResource();
+        responseResource.setResponseType(ResponseType.JOINOK);
+        responseResource.setIp(resource.getIp());
+        responseResource.setPort(resource.getPort());
+        responseResource.setErrorCode(0); // todo routingTable add error 9999
+
+        return responseResource;
+    }
+
+    public CommonResponseResource receiveLeaveRequest(NodeResource resource) {
+        CommonResponseResource responseResource = new CommonResponseResource();
+        responseResource.setResponseType(ResponseType.LEAVEOK);
+        responseResource.setIp(resource.getIp());
+        responseResource.setPort(resource.getPort());
+        responseResource.setErrorCode(0); // todo routingTable add error 9999
 
         return responseResource;
     }

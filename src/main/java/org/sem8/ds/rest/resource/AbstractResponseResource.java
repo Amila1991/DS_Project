@@ -31,8 +31,27 @@ public abstract class AbstractResponseResource {
         JOINOK {
             @Override
             public String toString() {
-                return "UNROK";
+                return "JOINOK";
+            }
+        },
+        LEAVEOK {
+            @Override
+            public String toString() {
+                return "LEAVEOK";
+            }
+        },
+        SEROK {
+            @Override
+            public String toString() {
+                return "SEROK";
+            }
+        },
+        FILELISTOK {
+            @Override
+            public String toString() {
+                return "FILELISTOK";
             }
         }
+
     }
 }

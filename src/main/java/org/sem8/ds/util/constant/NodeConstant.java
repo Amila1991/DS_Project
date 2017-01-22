@@ -12,6 +12,7 @@ public class NodeConstant {
 
     public static final class RestRequest {
         public static final String JOIN = "/join";
+        public static final String LEAVE = "/leave";
     }
 
     public static final class BootstrapRequest {
