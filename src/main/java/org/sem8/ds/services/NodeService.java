@@ -113,7 +113,7 @@ public class NodeService {
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
-                                routingTable.removeNeighbour(resource);
+                            routingTable.removeNeighbour(resource);
                         }
 
                         public void failed(Throwable throwable) {
@@ -185,13 +185,13 @@ public class NodeService {
                         System.out.println("success");
                     }
 
-                        public void failed(Throwable throwable) {
-                            System.out.println("fail");
-                            System.err.println(throwable.getMessage());
-                            routingTable.removeNeighbour(resource);
-                        }
-                    });
-       // }
+                    public void failed(Throwable throwable) {
+                        System.out.println("fail");
+                        System.err.println(throwable.getMessage());
+                        routingTable.removeNeighbour(resource);
+                    }
+                });
+        // }
     }
 
     /**
@@ -218,13 +218,26 @@ public class NodeService {
      * @return
      */
     public Map<String, List<NodeResource>> searchFileServiceWithHopCount(String fileName) {
+        NodeResource node = new NodeResource();
+        node.setIp(this.ip);
+        node.setPort(this.port);
+        List<NodeResource> tempNodeList = new ArrayList<>();
+        tempNodeList.add(node);
 
-        if (fileTable.getMyFilelist().contains(fileName)) {
-            return null;
-        } else {
-            Map<String, List<NodeResource>> tempMap;
-            tempMap = fileTable.searchFile(fileName);
+        Map<String, List<NodeResource>> tempMap;
+        tempMap = fileTable.searchFile(fileName);
+
+        List<String> tempList = fileTable.searchMyFileList(fileName);
+        if (tempList != null) {
+            tempMap = new HashMap<>();
+            for (int i = 0; i < tempList.size(); i++) {
+                tempMap.put(tempList.get(i), tempNodeList);
+            }
             return tempMap;
+        } else if (tempList == null && tempMap != null) {
+            return tempMap;
+        } else {
+            return null;
         }
     }
 

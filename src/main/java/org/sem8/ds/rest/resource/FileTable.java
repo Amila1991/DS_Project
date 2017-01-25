@@ -77,4 +77,14 @@ public class FileTable {
     public List<String> getMyFilelist() {
         return MyFilelist;
     }
+
+    public List<String> searchMyFileList(String fileName) {
+        List<String> tempList = new ArrayList<>();
+        for (int i = 0; i < this.MyFilelist.size(); i++) {
+            if (this.checkKeyword(fileName, this.MyFilelist.get(i))) {
+                tempList.add(this.MyFilelist.get(i));
+            }
+        }
+        return tempList;
+    }
 }
