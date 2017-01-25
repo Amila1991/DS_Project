@@ -12,6 +12,7 @@ public class FileTable {
 
     private final Map<String, List<NodeResource>> fileMap = new HashMap<String, List<NodeResource>>();
     private static FileTable table;
+    private List<String> MyFilelist = new ArrayList<>();
 
     private FileTable() {
     }
@@ -67,5 +68,13 @@ public class FileTable {
             }
         }
         return isKeyword;
+    }
+
+    public void initMyList(String file) {
+        this.MyFilelist.add(file);
+    }
+
+    public List<String> getMyFilelist() {
+        return MyFilelist;
     }
 }
