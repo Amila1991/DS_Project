@@ -1,22 +1,17 @@
 package org.sem8.ds.services;
 
-import org.sem8.ds.rest.resource.CommonResponseResource;
-import org.sem8.ds.rest.resource.ExceptionMessageResource;
-import org.sem8.ds.rest.resource.NodeResource;
-import org.sem8.ds.rest.resource.RoutingTable;
+import org.sem8.ds.rest.resource.*;
 import org.sem8.ds.services.exception.ServiceException;
+import org.sem8.ds.util.FileList;
 import org.sem8.ds.util.constant.NodeConstant;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Future;
 
 import static org.sem8.ds.rest.resource.AbstractResponseResource.ResponseType;
 
@@ -28,11 +23,30 @@ public class NodeService {
     private int port;
     private String username;
     private List<NodeResource> neighbourList;
+    private List<String> fileList = null;
+    private Map<String, List<NodeResource>> searchMap;
     private RoutingTable routingTable;
+
+    private ResponseInterface anInterface;
 
     public void init() throws SocketException {
         neighbourList = new ArrayList<NodeResource>();
+        searchMap = new HashMap<String, List<NodeResource>>();
         routingTable = RoutingTable.getInstance();
+
+    }
+
+    public GeneratedFileResponseResource generateFileList(int noofFiles) throws ServiceException {
+        GeneratedFileResponseResource responseResource = new GeneratedFileResponseResource();
+        if (noofFiles <= 5 && noofFiles >= 3) {
+            fileList = FileList.generateFileList(noofFiles);
+        } else {
+            throw new ServiceException("Request file count invalid. file count : {}", String.valueOf(noofFiles));
+        }
+        responseResource.setNoofFiles(noofFiles);
+        responseResource.setFileList(fileList);
+
+        return responseResource;
     }
 
     /**
@@ -52,13 +66,31 @@ public class NodeService {
         return parseResponse(response, CommonResponseResource.class);
     }
 
-    public List<CommonResponseResource> sendJoinRequestAll() throws ServiceException {
-        List<CommonResponseResource> responseResourceList = new ArrayList<CommonResponseResource>();
+    public void sendJoinRequestAll() throws ServiceException {
+        Client client = ClientBuilder.newClient();
+        String host;
         for (NodeResource resource : neighbourList) {
-            responseResourceList.add(sendJoinRequest(resource));
-        }
-        return responseResourceList;
+            host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
+            WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.JOIN);
 
+            NodeResource node = new NodeResource(getIp(), getPort());
+            Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
+                    Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
+                        public void completed(Response response) {
+                            try {
+                                CommonResponseResource responseResource = parseResponse(response,
+                                        CommonResponseResource.class);
+                                anInterface.executeCommonResponse(responseResource);
+                            } catch (ServiceException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        public void failed(Throwable throwable) {
+
+                        }
+                    });
+        }
     }
 
     public CommonResponseResource sendLeaveRequest(NodeResource resource) throws ServiceException {
@@ -73,15 +105,80 @@ public class NodeService {
         return parseResponse(response, CommonResponseResource.class);
     }
 
-    public List<CommonResponseResource> sendLeaveRequestAll() throws ServiceException {
-        List<CommonResponseResource> responseResourceList = new ArrayList<CommonResponseResource>();
-        for (NodeResource resource :
-                neighbourList) {
-            responseResourceList.add(sendLeaveRequest(resource));
-        }
-        return responseResourceList;
+    public void sendLeaveRequestAll() throws ServiceException {
+        Client client = ClientBuilder.newClient();
+        String host;
+        for (NodeResource resource : neighbourList) {
+            host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
+            WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.LEAVE);
 
+            NodeResource node = new NodeResource(getIp(), getPort());
+            Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
+                    Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
+                        public void completed(Response response) {
+                            try {
+                                CommonResponseResource responseResource = parseResponse(response,
+                                        CommonResponseResource.class);
+                                anInterface.executeCommonResponse(responseResource);
+                            } catch (ServiceException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        public void failed(Throwable throwable) {
+
+                        }
+                    });
+        }
     }
+
+    private Future<Response> sendSearchFileRequest(NodeResource resource, String file, int hop,
+                                                   final Set<String> fileSet, final int max_hop) throws
+            ServiceException {
+        Client client = ClientBuilder.newClient();
+        String host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
+        String path = NodeConstant.NODE_SERVICE + RestRequest.SEARCH + "/" + file + "/" + hop;
+        WebTarget target = client.target(host).path(path);
+
+        NodeResource node = new NodeResource(getIp(), getPort());
+        Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
+                Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
+                    public void completed(Response response) {
+                        try {
+                            SearchResponseResource responseResource =
+                                    parseResponse(response, SearchResponseResource.class);
+                            fileSet.addAll(responseResource.getFileList());
+                            if (max_hop < responseResource.getHop()) ;
+                            ///max_hop = responseResource.getHop();
+                        } catch (ServiceException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
+                    public void failed(Throwable throwable) {
+
+                    }
+                });
+
+        return response;//parseResponse(response, SearchResponseResource.class);
+    }
+
+
+    public SearchResponseResource searchFile(NodeResource resource, String file, int hop) throws ServiceException {
+        //TODO search part
+        if (searchMap.containsKey(file)) {
+            searchMap.get(file).add(resource);
+        } else {
+            List addMapList = new ArrayList<NodeResource>();
+            addMapList.add(resource);
+            searchMap.put(file, addMapList);
+        }
+        SearchResponseResource responseResource = new SearchResponseResource();
+
+        return responseResource;
+    }
+
 
     /**
      * TODO : update routing table
@@ -109,9 +206,6 @@ public class NodeService {
         return responseResource;
     }
 
-    public void searchFileService(NodeResource node, String fileName, int hops) {
-
-    }
 
     private <T> T parseResponse(Response response, Class<T> entityType) throws ServiceException {
         if (response == null) {
@@ -127,6 +221,25 @@ public class NodeService {
                 throw new ServiceException("response failed.....");
             }
         }
+    }
+
+    private Set<String> searchFileinList(String file) {
+        Set<String> toReturn = new HashSet<String>();
+        String[] fileToken = file.split("-");
+        L1:
+        for (String tempFile : fileList) {
+            if (!fileList.contains(tempFile)) {
+                String[] tempToken = tempFile.split("_");
+                for (int i = 0; i < tempToken.length; i++)
+                    for (int j = 0; j < fileToken.length; j++) {
+                        if (tempToken[i].equals(fileToken[j])) {
+                            toReturn.add(tempFile);
+                            continue L1;
+                        }
+                    }
+            }
+        }
+        return toReturn;
     }
 
     public String getIp() {

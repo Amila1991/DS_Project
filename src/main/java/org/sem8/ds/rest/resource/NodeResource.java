@@ -39,14 +39,19 @@ public class NodeResource {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        NodeResource that = (NodeResource) o;
+        NodeResource resource = (NodeResource) o;
 
-        return port == that.port;
+        if (port != resource.port) return false;
+        return ip.equals(resource.ip);
 
     }
 
     @Override
     public int hashCode() {
-        return port;
+        int result = ip.hashCode();
+        result = 31 * result + port;
+        return result;
     }
+
+
 }

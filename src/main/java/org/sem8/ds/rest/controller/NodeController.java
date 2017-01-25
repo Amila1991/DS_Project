@@ -1,9 +1,10 @@
 package org.sem8.ds.rest.controller;
 
+import org.sem8.ds.rest.resource.ExceptionMessageResource;
 import org.sem8.ds.rest.resource.NodeResource;
+import org.sem8.ds.rest.resource.SearchResponseResource;
 import org.sem8.ds.services.NodeService;
 import org.sem8.ds.services.exception.ServiceException;
-import org.sem8.ds.util.constant.NodeConstant;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,34 +18,10 @@ import javax.ws.rs.core.Response;
  */
 @Component
 @Path("/node")
-public class NodeController extends AbstractController {
+public class NodeController {
 
     @Autowired
     NodeService nodeService;
-
-    @POST
-    @Path("/sendJoin")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response sendJoinRequest(NodeResource resource) {
-        System.out.println(resource.getPort());
-        try {
-            return Response.status(200).entity(nodeService.sendJoinRequest(resource)).build();
-        } catch (ServiceException e) {
-            return handleServiceException(e);
-        }
-    }
-
-    @GET
-    @Path("/sendJoinAll")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response sendJoinRequestAll() {
-        try {
-            return Response.status(200).entity(nodeService.sendJoinRequestAll()).build();
-        } catch (ServiceException e) {
-            return handleServiceException(e);
-        }
-    }
 
     @POST
     @Path(RestRequest.JOIN)
@@ -55,31 +32,6 @@ public class NodeController extends AbstractController {
         return Response.status(200).entity(nodeService.receiveJoinRequest(resource)).build();
     }
 
-
-    @POST
-    @Path("/sendLeave")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response sendLeaveRequest(NodeResource resource) {
-        System.out.println(resource.getPort());
-        try {
-            return Response.status(200).entity(nodeService.sendLeaveRequest(resource)).build();
-        } catch (ServiceException e) {
-            return handleServiceException(e);
-        }
-    }
-
-    @GET
-    @Path("/sendLeaveAll")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response sendLeaveRequestAll() {
-        try {
-            return Response.status(200).entity(nodeService.sendLeaveRequestAll()).build();
-        } catch (ServiceException e) {
-            return handleServiceException(e);
-        }
-    }
-
     @POST
     @Path(RestRequest.LEAVE)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -88,4 +40,29 @@ public class NodeController extends AbstractController {
         System.out.println(resource.getPort());
         return Response.status(200).entity(nodeService.receiveLeaveRequest(resource)).build();
     }
+
+    @POST
+    @Path(RestRequest.SEARCH + "/{file}/{hop}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response searchFileRequest(NodeResource resource, @PathParam("file") String file, @PathParam("hop") int hop) {
+        try {
+            return Response.status(200).entity(nodeService.searchFile(resource, file, hop)).build();
+        } catch (ServiceException e) {
+            return handleServiceException(e);
+        }
+    }
+
+   /* @POST
+    @Path(RestRequest.SEARCH_RESPONSE)
+    @Consumes(Medi)
+    public Response searchFileResponse(SearchResponseResource){
+        return Response.status(200).build();
+    }*/
+
+    private Response handleServiceException(ServiceException e) {
+        return Response.status(500).entity(new ExceptionMessageResource(e.getMessage())).build();
+    }
+
+    //showNeighbours
 }
