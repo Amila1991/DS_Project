@@ -1,5 +1,6 @@
 package org.sem8.ds.services;
 
+import org.glassfish.jersey.client.ClientProperties;
 import org.sem8.ds.rest.resource.*;
 import org.sem8.ds.services.exception.ServiceException;
 import org.sem8.ds.util.FileList;
@@ -171,6 +172,30 @@ public class NodeService {
         SearchResponseResource responseResource = new SearchResponseResource();
 
         return responseResource;
+    }
+
+    public void pingNeighbourNodes(NodeResource resource) {
+        Client client = ClientBuilder.newClient();
+        client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
+        client.property(ClientProperties.READ_TIMEOUT,    1000);
+        String host;
+       // for (NodeResource resource : neighbourList) {
+            host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
+            WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.PING);
+
+            NodeResource node = new NodeResource(getIp(), getPort());
+            Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
+                    Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
+                        public void completed(Response response) {
+                            System.out.println("success");
+                        }
+
+                        public void failed(Throwable throwable) {
+                            System.out.println("fail");
+                            System.err.println(throwable.getMessage());
+                        }
+                    });
+       // }
     }
 
 
