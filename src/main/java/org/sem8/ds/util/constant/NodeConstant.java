@@ -16,6 +16,7 @@ public class NodeConstant {
         public static final String LEAVE = "/leave";
         public static final String SEARCH = "/search";
         public static final String SEARCH_RESPONSE = "/searchResponse";
+        public static final String PING = "/ping";
     }
 
     public static final class BootstrapRequest {

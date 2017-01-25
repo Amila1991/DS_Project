@@ -53,6 +53,12 @@ public class NodeController {
         }
     }
 
+    @GET
+    @Path(RestRequest.PING)
+    public Response pingNode() {
+        return Response.status(200).allow("ping").build();
+    }
+
    /* @POST
     @Path(RestRequest.SEARCH_RESPONSE)
     @Consumes(Medi)
