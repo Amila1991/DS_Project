@@ -25,15 +25,15 @@ public class NodeClientController extends AbstractClientController {
         return nodeService.sendJoinRequest(resource);
     }
 
-    public List<CommonResponseResource> sendJoinRequestAll() throws ServiceException {
-        return nodeService.sendJoinRequestAll();
+    public void sendJoinRequestAll() throws ServiceException {
+        nodeService.sendJoinRequestAll();
     }
 
     public CommonResponseResource sendLeaveRequest(NodeResource resource) throws ServiceException {
         return nodeService.sendLeaveRequest(resource);
     }
 
-    public List<CommonResponseResource> sendLeaveRequestAll() throws ServiceException {
-        return nodeService.sendLeaveRequestAll();
+    public void sendLeaveRequestAll() throws ServiceException {
+        nodeService.sendLeaveRequestAll();
     }
 }
