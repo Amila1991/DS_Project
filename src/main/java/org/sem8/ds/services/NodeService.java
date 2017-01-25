@@ -3,6 +3,7 @@ package org.sem8.ds.services;
 import org.sem8.ds.rest.resource.CommonResponseResource;
 import org.sem8.ds.rest.resource.ExceptionMessageResource;
 import org.sem8.ds.rest.resource.NodeResource;
+import org.sem8.ds.rest.resource.RoutingTable;
 import org.sem8.ds.services.exception.ServiceException;
 import org.sem8.ds.util.constant.NodeConstant;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
@@ -27,13 +28,14 @@ public class NodeService {
     private int port;
     private String username;
     private List<NodeResource> neighbourList;
+    private RoutingTable routingTable;
 
     public void init() throws SocketException {
         neighbourList = new ArrayList<NodeResource>();
+        routingTable = RoutingTable.getInstance();
     }
 
     /**
-     *
      * @param resource
      * @return
      * @throws ServiceException
@@ -81,10 +83,9 @@ public class NodeService {
 
     }
 
-
     /**
-     *
      * TODO : update routing table
+     *
      * @param resource
      * @return
      */
@@ -94,7 +95,7 @@ public class NodeService {
         responseResource.setIp(resource.getIp());
         responseResource.setPort(resource.getPort());
         responseResource.setErrorCode(0); // todo routingTable add error 9999
-
+        routingTable.addNeighBour(resource);
         return responseResource;
     }
 
@@ -104,10 +105,13 @@ public class NodeService {
         responseResource.setIp(resource.getIp());
         responseResource.setPort(resource.getPort());
         responseResource.setErrorCode(0); // todo routingTable add error 9999
-
+        routingTable.removeNeighbour(resource);
         return responseResource;
     }
 
+    public void searchFileService(NodeResource node, String fileName, int hops) {
+
+    }
 
     private <T> T parseResponse(Response response, Class<T> entityType) throws ServiceException {
         if (response == null) {

@@ -19,12 +19,4 @@ public class NodeConstant {
         public static final String NODE_REG = "REG";
         public static final String NODE_UNREG = "UNREG";
     }
-
-    public static final class APIMessages {
-        public static String CONNECTED = "Connected";
-        public static String NOTCONNECTED = "Not Connected";
-        public static String UNREGISTERED = "Unregistered";
-        public static String DISCONNECTED = "Disconnected";
-    }
-
 }
