@@ -3,10 +3,8 @@ package org.sem8.ds.services;
 import org.sem8.ds.rest.resource.*;
 import org.sem8.ds.services.exception.ServiceException;
 import org.sem8.ds.util.FileList;
-import org.sem8.ds.util.RoutingTable;
 import org.sem8.ds.util.constant.NodeConstant;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
@@ -27,9 +25,6 @@ public class NodeService {
     private List<NodeResource> neighbourList;
     private List<String> fileList = null;
     private Map<String, List<NodeResource>> searchMap;
-
-    //@Autowired
-    RoutingTable routingTable;
 
     private ResponseInterface anInterface;
 
@@ -174,28 +169,7 @@ public class NodeService {
             searchMap.put(file, addMapList);
         }
         SearchResponseResource responseResource = new SearchResponseResource();
-        Set<String> fileSet = searchFileinList(file);
-        fileSet.addAll(routingTable.searchFile(file));
 
-        int max_hop = 0;
-        L1:
-        for (NodeResource nodeResource : routingTable.getNodeTable()) {
-            /*if (resource.equals(nodeResource))
-                continue L1;*/
-
-            for (NodeResource reqNode : searchMap.get(file)) {
-                if (nodeResource.equals(reqNode))
-                    continue L1;
-            }
-
-            sendSearchFileRequest(nodeResource, file, hop, fileSet, max_hop);
-            /*fileSet.addAll(serResResource.getFileList());
-            if (max_hop < serResResource.getHop())
-                max_hop = serResResource.getHop();*/
-
-        }
-        responseResource.setHop(++max_hop);
-        responseResource.addFile(fileSet);
         return responseResource;
     }
 
