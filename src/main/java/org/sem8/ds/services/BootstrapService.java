@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.sem8.ds.rest.resource.AbstractResponseResource.*;
 
@@ -29,9 +31,9 @@ public class BootstrapService {
         socket = new DatagramSocket();
     }
 
-    private void addNeighbourNode(int noOfNode, String[] nodeList) {
+    private void addNeighbourNode(int noOfNode, String[] nodeList, List<NodeResource> resourceList) {
         for (int i = 1; i <= noOfNode; i++) {
-            nodeService.addNeighbourNode(nodeList[2 * i], Integer.parseInt(nodeList[2 * i + 1]));
+            resourceList.add(new NodeResource(nodeList[2 * i], Integer.parseInt(nodeList[2 * i + 1])));
         }
     }
 
@@ -82,6 +84,7 @@ public class BootstrapService {
         nodeService.setPort(resource.getPort());
         nodeService.setUsername(username);
 
+        List<NodeResource> resourceList = new ArrayList<NodeResource>();
         int responseCode = Integer.parseInt(responseSplit[1]);
 
         switch (responseCode) {
@@ -90,11 +93,11 @@ public class BootstrapService {
                 break;
             case 1:
                 registerResResource.setNode_No(1);
-                addNeighbourNode(1, responseSplit);
+                addNeighbourNode(1, responseSplit, resourceList);
                 break;
             case 2:
                 registerResResource.setNode_No(2);
-                addNeighbourNode(2, responseSplit);
+                addNeighbourNode(2, responseSplit, resourceList);
                 break;
             case 9999:
                 registerResResource.setNode_No(9999);
@@ -113,7 +116,8 @@ public class BootstrapService {
                 registerResResource.setError("Error 9996 – failed, can’t register. BS full");
         }
 
-        registerResResource.setNodesList(nodeService.getNeighbourList());
+        nodeService.sendJoinRequestAll(resourceList);
+        registerResResource.setNodesList(nodeService.getRoutingTable().getNodeList());
 
         return registerResResource;
     }

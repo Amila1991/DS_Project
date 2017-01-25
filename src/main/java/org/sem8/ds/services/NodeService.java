@@ -32,8 +32,8 @@ public class NodeService {
     private ResponseInterface anInterface;
 
     public void init() throws SocketException {
-        neighbourList = new ArrayList<NodeResource>();
-        searchMap = new HashMap<String, List<NodeResource>>();
+        neighbourList = new ArrayList<>();
+        searchMap = new HashMap<>();
         routingTable = RoutingTable.getInstance();
         fileTable = FileTable.getInstance();
 
@@ -69,10 +69,10 @@ public class NodeService {
         return parseResponse(response, CommonResponseResource.class);
     }
 
-    public void sendJoinRequestAll() throws ServiceException {
+    public void sendJoinRequestAll(List<NodeResource> resourceList) throws ServiceException {
         Client client = ClientBuilder.newClient();
         String host;
-        for (NodeResource resource : neighbourList) {
+        for (final NodeResource resource : resourceList) {
             host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
             WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.JOIN);
 
@@ -80,17 +80,11 @@ public class NodeService {
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
-                            try {
-                                CommonResponseResource responseResource = parseResponse(response,
-                                        CommonResponseResource.class);
-                                anInterface.executeCommonResponse(responseResource);
-                            } catch (ServiceException e) {
-                                e.printStackTrace();
-                            }
+                            routingTable.addNeighBour(resource);
                         }
 
                         public void failed(Throwable throwable) {
-
+                            System.err.println(throwable.getMessage());
                         }
                     });
         }
@@ -111,7 +105,7 @@ public class NodeService {
     public void sendLeaveRequestAll() throws ServiceException {
         Client client = ClientBuilder.newClient();
         String host;
-        for (NodeResource resource : neighbourList) {
+        for (final NodeResource resource : routingTable.getNodeList()) {
             host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
             WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.LEAVE);
 
@@ -119,17 +113,11 @@ public class NodeService {
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
-                            try {
-                                CommonResponseResource responseResource = parseResponse(response,
-                                        CommonResponseResource.class);
-                                anInterface.executeCommonResponse(responseResource);
-                            } catch (ServiceException e) {
-                                e.printStackTrace();
-                            }
+                                routingTable.removeNeighbour(resource);
                         }
 
                         public void failed(Throwable throwable) {
-
+                            System.err.println(throwable.getMessage());
                         }
                     });
         }
@@ -181,7 +169,7 @@ public class NodeService {
         return responseResource;
     }
 
-    public void pingNeighbourNodes(NodeResource resource) {
+    public void pingNeighbourNodes(final NodeResource resource) {
         Client client = ClientBuilder.newClient();
         client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
         client.property(ClientProperties.READ_TIMEOUT, 1000);
@@ -197,12 +185,13 @@ public class NodeService {
                         System.out.println("success");
                     }
 
-                    public void failed(Throwable throwable) {
-                        System.out.println("fail");
-                        System.err.println(throwable.getMessage());
-                    }
-                });
-        // }
+                        public void failed(Throwable throwable) {
+                            System.out.println("fail");
+                            System.err.println(throwable.getMessage());
+                            routingTable.removeNeighbour(resource);
+                        }
+                    });
+       // }
     }
 
     /**
@@ -325,12 +314,20 @@ public class NodeService {
         this.username = username;
     }
 
-    public List<NodeResource> getNeighbourList() {
-        return neighbourList;
+    public RoutingTable getRoutingTable() {
+        return routingTable;
     }
 
-    public void addNeighbourNode(String ip, int port) {
-        neighbourList.add(new NodeResource(ip, port));
+    public void setRoutingTable(RoutingTable routingTable) {
+        this.routingTable = routingTable;
+    }
+
+    public ResponseInterface getAnInterface() {
+        return anInterface;
+    }
+
+    public void setAnInterface(ResponseInterface anInterface) {
+        this.anInterface = anInterface;
     }
 
     @Override
