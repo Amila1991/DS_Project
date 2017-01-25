@@ -10,49 +10,39 @@ import java.util.*;
 public class FileTable {
     //    private ArrayList<String> neighbouringTable;
 
-    private final Map<String, List<String>> fileMap = new HashMap<>();
+    private final Map<String, List<NodeResource>> fileMap = new HashMap<>();
     private static FileTable table;
 
     private FileTable() {
     }
 
-    public void addFile(String fileName) {
-        String[] temp = fileName.split("_");
-        List<String> fileList;
-        ArrayList<String> content;
-        for (int i = 0; i < temp.length; i++) {
-//            System.out.println(temp[i]);
-            fileList = this.fileMap.get(temp[i]);
-            if (fileList == null) {
-                content = new ArrayList<>();
-                content.add(fileName);
-                this.fileMap.put(temp[i], content);
-            } else {
-                fileList.add(fileName);
-            }
-
+    public void addFile(String fileName, NodeResource node) {
+        List<NodeResource> temp;
+        temp = this.fileMap.get(node);
+        if (temp != null) {
+            temp.add(node);
+        } else {
+            temp = new ArrayList<NodeResource>();
+            temp.add(node);
+            this.fileMap.put(fileName, temp);
         }
     }
 
-    public Set<String> searchFile(String fileName) {
-        Set<String> tempSet = new HashSet<>();
-        String[] tempKeywords = fileName.split(" ");
-        List<String> fileList;
-        Iterator<String> fileIterator;
-        for (int i = 0; i < tempKeywords.length; i++) {
-            fileList = this.fileMap.get(tempKeywords[i]);
-            for (String string : fileList) {
-                tempSet.add(string);
+    public List<NodeResource> searchFile(String fileName) {
+        Set<String> tempSet = this.fileMap.keySet();
+        String tempName;
+        Iterator<String> itr = tempSet.iterator();
+        List<NodeResource> tempList = new ArrayList<>();
+        while (itr.hasNext()) {
+            tempName = itr.next();
+            if (this.checkKeyword(fileName, tempName)) {
+                tempList.addAll(this.getFileMap().get(tempName));
             }
-/*            fileIterator = fileList.iterator();
-            while (fileIterator.hasNext()) {
-                tempSet.add(fileIterator.next());
-            }*/
         }
-        return tempSet;
+        return tempList;
     }
 
-    public Map<String, List<String>> getFileMap() {
+    public Map<String, List<NodeResource>> getFileMap() {
         return fileMap;
     }
 
@@ -61,5 +51,20 @@ public class FileTable {
             FileTable.table = new FileTable();
         }
         return FileTable.table;
+    }
+
+    private boolean checkKeyword(String keyword, String fileName) {
+        boolean isKeyword = true;
+        keyword = keyword.trim().toLowerCase();
+        fileName = fileName.trim().toLowerCase();
+        List splitFileName = Arrays.asList(fileName.split("\\s+"));
+        String[] keywords = keyword.split("\\s+");
+        for (int i = 0; i < keywords.length; i++) {
+            if (!splitFileName.contains(keywords[i])) {
+                isKeyword = false;
+                break;
+            }
+        }
+        return isKeyword;
     }
 }
