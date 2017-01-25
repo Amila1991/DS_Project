@@ -1,7 +1,7 @@
 package org.sem8.ds.services;
 
 import org.sem8.ds.rest.resource.NodeResource;
-import org.sem8.ds.rest.resource.RegisterResponseResource;
+import org.sem8.ds.client.resource.RegisterResponseResource;
 import org.sem8.ds.rest.resource.CommonResponseResource;
 import org.sem8.ds.services.exception.ServiceException;
 import org.sem8.ds.util.constant.NodeConstant.BootstrapRequest;
@@ -56,7 +56,6 @@ public class BootstrapService {
      */
     public RegisterResponseResource register(NodeResource resource, String username)  throws ServiceException{
         RegisterResponseResource registerResResource = new RegisterResponseResource();
-        registerResResource.setResponseType(ResponseType.REGOK);
         String dataPacket = BootstrapRequest.NODE_REG + " " + resource.getIp() + " " + resource.getPort() + " "
                 + username + " ";
 
@@ -157,6 +156,7 @@ public class BootstrapService {
 
         if (responseCode == 0) {
             responseResource.setErrorCode(0);
+            nodeService.sendLeaveRequestAll();
         }
 
         return responseResource;

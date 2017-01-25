@@ -1,4 +1,7 @@
-package org.sem8.ds.rest.resource;
+package org.sem8.ds.client.resource;
+
+import org.sem8.ds.rest.resource.AbstractResponseResource;
+import org.sem8.ds.rest.resource.NodeResource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +15,7 @@ public class RegisterResponseResource extends AbstractResponseResource {
     private String error;
 
     public RegisterResponseResource() {
+        setResponseType(ResponseType.REGOK);
         this.nodesList = new ArrayList<NodeResource>();
     }
 
