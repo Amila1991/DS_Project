@@ -10,7 +10,7 @@ import java.util.*;
 public class FileTable {
     //    private ArrayList<String> neighbouringTable;
 
-    private final Map<String, List<NodeResource>> fileMap = new HashMap<>();
+    private final Map<String, List<NodeResource>> fileMap = new HashMap<String, List<NodeResource>>();
     private static FileTable table;
 
     private FileTable() {
@@ -32,7 +32,7 @@ public class FileTable {
         Set<String> tempSet = this.fileMap.keySet();
         String tempName;
         Iterator<String> itr = tempSet.iterator();
-        List<NodeResource> tempList = new ArrayList<>();
+        List<NodeResource> tempList = new ArrayList<NodeResource>();
         while (itr.hasNext()) {
             tempName = itr.next();
             if (this.checkKeyword(fileName, tempName)) {

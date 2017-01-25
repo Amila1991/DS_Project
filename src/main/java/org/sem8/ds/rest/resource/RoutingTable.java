@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class RoutingTable {
     //    private ArrayList<String> neighbouringTable;
-    private List<NodeResource> nodeList = new ArrayList<>();
+    private List<NodeResource> nodeList = new ArrayList<NodeResource>();
 
     private static RoutingTable table;
 
