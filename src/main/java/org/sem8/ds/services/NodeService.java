@@ -26,12 +26,15 @@ public class NodeService {
     private List<NodeResource> neighbourList;
     private List<String> fileList = null;
     private Map<String, List<NodeResource>> searchMap;
+    private RoutingTable routingTable;
 
     private ResponseInterface anInterface;
 
     public void init() throws SocketException {
         neighbourList = new ArrayList<NodeResource>();
         searchMap = new HashMap<String, List<NodeResource>>();
+        routingTable = RoutingTable.getInstance();
+
     }
 
     public GeneratedFileResponseResource generateFileList(int noofFiles) throws ServiceException {
@@ -76,7 +79,8 @@ public class NodeService {
                     Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
                             try {
-                                CommonResponseResource responseResource = parseResponse(response, CommonResponseResource.class);
+                                CommonResponseResource responseResource = parseResponse(response,
+                                        CommonResponseResource.class);
                                 anInterface.executeCommonResponse(responseResource);
                             } catch (ServiceException e) {
                                 e.printStackTrace();
@@ -114,7 +118,8 @@ public class NodeService {
                     Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
                             try {
-                                CommonResponseResource responseResource = parseResponse(response, CommonResponseResource.class);
+                                CommonResponseResource responseResource = parseResponse(response,
+                                        CommonResponseResource.class);
                                 anInterface.executeCommonResponse(responseResource);
                             } catch (ServiceException e) {
                                 e.printStackTrace();
@@ -129,7 +134,8 @@ public class NodeService {
     }
 
     private Future<Response> sendSearchFileRequest(NodeResource resource, String file, int hop,
-                                                   final Set<String> fileSet, final int max_hop) throws ServiceException {
+                                                   final Set<String> fileSet, final int max_hop) throws
+            ServiceException {
         Client client = ClientBuilder.newClient();
         String host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
         String path = NodeConstant.NODE_SERVICE + RestRequest.SEARCH + "/" + file + "/" + hop;
@@ -211,7 +217,7 @@ public class NodeService {
         responseResource.setIp(resource.getIp());
         responseResource.setPort(resource.getPort());
         responseResource.setErrorCode(0); // todo routingTable add error 9999
-
+        routingTable.addNeighBour(resource);
         return responseResource;
     }
 
@@ -221,7 +227,7 @@ public class NodeService {
         responseResource.setIp(resource.getIp());
         responseResource.setPort(resource.getPort());
         responseResource.setErrorCode(0); // todo routingTable add error 9999
-
+        routingTable.removeNeighbour(resource);
         return responseResource;
     }
 
