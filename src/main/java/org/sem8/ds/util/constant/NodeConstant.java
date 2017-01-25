@@ -9,6 +9,7 @@ public class NodeConstant {
     public static final String REST_API = "/rest";
 
     public static final String NODE_SERVICE = "/node";
+    public static final int HOP_COUNT = 5;
 
     public static final class RestRequest {
         public static final String JOIN = "/join";
