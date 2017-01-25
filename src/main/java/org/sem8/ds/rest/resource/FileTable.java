@@ -28,18 +28,19 @@ public class FileTable {
         }
     }
 
-    public List<NodeResource> searchFile(String fileName) {
+    public Map<String, List<NodeResource>> searchFile(String fileName) {
         Set<String> tempSet = this.fileMap.keySet();
+        Map<String, List<NodeResource>> tempMap = new HashMap<>();
         String tempName;
         Iterator<String> itr = tempSet.iterator();
         List<NodeResource> tempList = new ArrayList<>();
         while (itr.hasNext()) {
             tempName = itr.next();
             if (this.checkKeyword(fileName, tempName)) {
-                tempList.addAll(this.getFileMap().get(tempName));
+                tempMap.put(tempName, tempList);
             }
         }
-        return tempList;
+        return tempMap;
     }
 
     public Map<String, List<NodeResource>> getFileMap() {

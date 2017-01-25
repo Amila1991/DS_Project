@@ -26,6 +26,7 @@ public class NodeService {
     private List<String> fileList = null;
     private Map<String, List<NodeResource>> searchMap;
     private RoutingTable routingTable;
+    private FileTable fileTable;
 
     private ResponseInterface anInterface;
 
@@ -33,6 +34,7 @@ public class NodeService {
         neighbourList = new ArrayList<NodeResource>();
         searchMap = new HashMap<String, List<NodeResource>>();
         routingTable = RoutingTable.getInstance();
+        fileTable = FileTable.getInstance();
 
     }
 
@@ -179,6 +181,15 @@ public class NodeService {
         return responseResource;
     }
 
+    public Map<String, List<NodeResource>> searchFileService(String file) throws
+            ServiceException {
+
+        SearchResponseResource response = new SearchResponseResource();
+        Map<String, List<NodeResource>> tempMap;
+        tempMap = fileTable.searchFile(file);
+
+        return tempMap;
+    }
 
     /**
      * TODO : update routing table
