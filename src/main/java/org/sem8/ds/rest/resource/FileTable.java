@@ -19,7 +19,7 @@ public class FileTable {
 
     public void addFile(String fileName, NodeResource node) {
         List<NodeResource> temp;
-        temp = this.fileMap.get(node);
+        temp = this.fileMap.get(fileName);
         if (temp != null) {
             temp.add(node);
         } else {
@@ -76,6 +76,10 @@ public class FileTable {
 
     public List<String> getMyFilelist() {
         return MyFilelist;
+    }
+
+    public boolean checkContainFile(String file) {
+        return getMyFilelist().contains(file);
     }
 
     public List<String> searchMyFileList(String fileName) {

@@ -1,8 +1,7 @@
 package org.sem8.ds.rest.resource;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author amila karunathilaka.
@@ -11,12 +10,11 @@ public class SearchResponseResource extends AbstractResponseResource {
     private String ip;
     private int port;
 
-    private List<String> fileList;
+    private Map<String, List<NodeResource>> fileList;
     private int hop;
 
     public SearchResponseResource() {
         setResponseType(ResponseType.SEROK);
-        fileList = new ArrayList<String>();
     }
 
     public String getIp() {
@@ -35,20 +33,12 @@ public class SearchResponseResource extends AbstractResponseResource {
         this.port = port;
     }
 
-    public List<String> getFileList() {
+    public Map<String, List<NodeResource>> getFileList() {
         return fileList;
     }
 
-    public void setFileList(List<String> fileList) {
+    public void setFileList(Map<String, List<NodeResource>> fileList) {
         this.fileList = fileList;
-    }
-
-    public void addFile(String file) {
-        this.fileList.add(file);
-    }
-
-    public void addFile(Collection<String> file) {
-        this.fileList.addAll(file);
     }
 
     public int getHop() {

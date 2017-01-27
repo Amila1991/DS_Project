@@ -2,7 +2,6 @@ package org.sem8.ds.rest.controller;
 
 import org.sem8.ds.rest.resource.ExceptionMessageResource;
 import org.sem8.ds.rest.resource.NodeResource;
-import org.sem8.ds.rest.resource.SearchResponseResource;
 import org.sem8.ds.services.NodeService;
 import org.sem8.ds.services.exception.ServiceException;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
@@ -12,6 +11,8 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author amila karunathilaka
@@ -45,7 +46,8 @@ public class NodeController {
     @Path(RestRequest.SEARCH + "/{file}/{hop}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response searchFileRequest(NodeResource resource, @PathParam("file") String file, @PathParam("hop") int hop) {
+    public Response searchFileRequest(List<NodeResource> resource, @PathParam("file") String file, @PathParam("hop") int hop) {
+        System.out.println("Search request");
         try {
             return Response.status(200).entity(nodeService.searchFile(resource, file, hop)).build();
         } catch (ServiceException e) {
@@ -59,16 +61,24 @@ public class NodeController {
         return Response.status(200).allow("ping").build();
     }
 
-   /* @POST
+    @GET
+    @Path("check")
+    public Response pingCheck() {
+        nodeService.setNodeService(nodeService);
+        nodeService.startPing();
+        return Response.status(200).allow("ping").build();
+    }
+
+    @POST
     @Path(RestRequest.SEARCH_RESPONSE)
-    @Consumes(Medi)
-    public Response searchFileResponse(SearchResponseResource){
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response searchFileResponse(Map<String, List<NodeResource>> result){
+        System.out.println("Search response");
+        nodeService.receiveSearchResponse(result);
         return Response.status(200).build();
-    }*/
+    }
 
     private Response handleServiceException(ServiceException e) {
         return Response.status(500).entity(new ExceptionMessageResource(e.getMessage())).build();
     }
-
-    //showNeighbours
 }
