@@ -35,6 +35,14 @@ public class NodeResource {
     }
 
     @Override
+    public String toString() {
+        return "{" +
+                "ip :" + ip +
+                ", port :" + port +
+                "}";
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
