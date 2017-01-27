@@ -24,8 +24,7 @@ public class BootstrapService {
 
     private DatagramSocket socket;
 
-    @Autowired
-    private NodeService nodeService;
+    private NodeService nodeService = NodeService.getNodeService();
 
     public void init() throws SocketException {
         socket = new DatagramSocket();
@@ -117,7 +116,7 @@ public class BootstrapService {
         }
 
         nodeService.sendJoinRequestAll(resourceList);
-        registerResResource.setNodesList(nodeService.getRoutingTable().getNodeList());
+        registerResResource.setNodesList(resourceList);
 
         return registerResResource;
     }
