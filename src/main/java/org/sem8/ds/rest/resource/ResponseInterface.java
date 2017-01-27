@@ -2,29 +2,33 @@ package org.sem8.ds.rest.resource;
 
 import org.sem8.ds.client.resource.RegisterResponseResource;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author amila karunathilaka.
  */
 public interface ResponseInterface {
 
-    void executeRegisterResponse(RegisterResponseResource responseResource);
-
     void executeCommonResponse(CommonResponseResource responseResource);
 
-    void UpdateRoutingTable(UpdateType updateType, NodeResource resource);
+    void updateRoutingTable(UpdateType updateType, NodeResource resource);
+
+    void searchFileResult(Map<String, List<NodeResource>> resultMap);
+
 
 
     enum UpdateType{
-        ADD {
+        JOIN {
             @Override
             public String toString() {
-                return "add";
+                return "Join";
             }
         },
-        REMOVE {
+        LEAVE {
             @Override
             public String toString() {
-                return "remove";
+                return "Leave";
             }
         }
     }
