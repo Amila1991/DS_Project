@@ -74,12 +74,12 @@ public class NodeController {
     }
 
     @POST
-    @Path(RestRequest.SEARCH_RESPONSE)
+    @Path(RestRequest.SEARCH_RESPONSE + "/{hop}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response searchFileResponse(Map<String, List<NodeResource>> result){
+    public Response searchFileResponse(Map<String, List<NodeResource>> result, @PathParam("hop") int hop){
         System.out.println("Search response");
         nodeService.increaseMsgCount(NodeMsgType.SEARCHRESPONSE);
-        nodeService.receiveSearchResponse(result);
+        nodeService.receiveSearchResponse(result, hop);
         return Response.status(200).build();
     }
 

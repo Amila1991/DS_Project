@@ -242,7 +242,7 @@ public class NodeService {
                             resourceList.get(0).getPort() + NodeConstant.REST_API;
                     System.out.println(host);
                     WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE +
-                            RestRequest.SEARCH_RESPONSE);
+                            RestRequest.SEARCH_RESPONSE + "/" + hop);
 
                     Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
                             Entity.entity(result, MediaType.APPLICATION_JSON_TYPE));
@@ -366,7 +366,7 @@ public class NodeService {
     }
 
 
-    public void receiveSearchResponse(Map<String, List<NodeResource>> resultListMap) {
+    public void receiveSearchResponse(Map<String, List<NodeResource>> resultListMap, int currentHop) {
         System.out.println("search result");
         Iterator<String> keyIterator= resultListMap.keySet().iterator();
         while (keyIterator.hasNext()) {
@@ -375,7 +375,7 @@ public class NodeService {
                 fileTable.initMyList(tempFile);
             }
         }
-        anInterface.searchFileResult(resultListMap);
+        anInterface.searchFileResult(resultListMap, currentHop);
     }
 
 
