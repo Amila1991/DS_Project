@@ -232,7 +232,7 @@ public class NodeService {
                     sendSearchFileRequest(resourceList, file, hop);
 
                 Map<String, List<NodeResource>> result = searchFileServiceWithHopCount(file);
-                if (result != null) {
+                if (result != null && !result.isEmpty()) {
                     System.out.println("result is not null");
 
                     Client client = ClientBuilder.newClient();
@@ -276,7 +276,7 @@ public class NodeService {
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().get(
             new InvocationCallback<Response>() {
                         public void completed(Response response) {
-                            System.out.println("success");
+                            //System.out.println("success");
                         }
 
                         public void failed(Throwable throwable) {
@@ -371,6 +371,7 @@ public class NodeService {
         Iterator<String> keyIterator= resultListMap.keySet().iterator();
         while (keyIterator.hasNext()) {
             String tempFile = keyIterator.next();
+            System.out.println(tempFile);
             if (!fileTable.checkContainFile(tempFile)){
                 fileTable.initMyList(tempFile);
             }
