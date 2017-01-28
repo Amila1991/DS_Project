@@ -25,4 +25,8 @@ public class BootstrapController extends AbstractClientController {
         System.out.println(resource.getIp() + " " + bootstrapService);
         return bootstrapService.Unregister(resource, username);
     }
+
+    public void setBootstrapHostName (String host) {
+        bootstrapService.setHostname(host);
+    }
 }
