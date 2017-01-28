@@ -23,4 +23,31 @@ public class NodeConstant {
         public static final String NODE_REG = "REG";
         public static final String NODE_UNREG = "UNREG";
     }
+
+    public enum NodeMsgType {
+        SEARCH {
+            @Override
+            public String toString() {
+                return "SEARCH";
+            }
+        },
+        SEARCHRESPONSE {
+            @Override
+            public String toString() {
+                return "SEARCHRESPONSE";
+            }
+        },
+        JOIN {
+            @Override
+            public String toString() {
+                return "JOIN";
+            }
+        },
+        LEAVE {
+            @Override
+            public String toString() {
+                return "LEAVE";
+            }
+        }
+    }
 }

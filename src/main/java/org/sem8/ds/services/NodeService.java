@@ -1,11 +1,13 @@
 package org.sem8.ds.services;
 
 import org.glassfish.jersey.client.ClientProperties;
+import org.sem8.ds.client.remote.ResponseInterface;
 import org.sem8.ds.rest.resource.*;
-import org.sem8.ds.rest.resource.ResponseInterface.UpdateType;
+import org.sem8.ds.client.remote.ResponseInterface.UpdateType;
 import org.sem8.ds.services.exception.ServiceException;
 import org.sem8.ds.util.FileList;
 import org.sem8.ds.util.constant.NodeConstant;
+import org.sem8.ds.util.constant.NodeConstant.NodeMsgType;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
 
 import javax.ws.rs.client.*;
@@ -29,6 +31,8 @@ public class NodeService {
     private RoutingTable routingTable;
     private FileTable fileTable;
 
+    private Map<NodeMsgType, Integer> msgCount;
+
     private static NodeService nodeService;
 
     private ResponseInterface anInterface;
@@ -37,6 +41,11 @@ public class NodeService {
         searchMap = new HashMap<>();
         routingTable = RoutingTable.getInstance();
         fileTable = FileTable.getInstance();
+        msgCount = new HashMap<>();
+        msgCount.put(NodeMsgType.JOIN, 0);
+        msgCount.put(NodeMsgType.LEAVE, 0);
+        msgCount.put(NodeMsgType.SEARCH, 0);
+        msgCount.put(NodeMsgType.SEARCHRESPONSE, 0);
 
     }
 
@@ -462,6 +471,19 @@ public class NodeService {
 
     public void setAnInterface(ResponseInterface anInterface) {
         this.anInterface = anInterface;
+    }
+
+    public void increaseMsgCount(NodeMsgType msgType) {
+        msgCount.put(msgType, msgCount.get(msgType)+1);
+        anInterface.setTotalMsgCount(totalMsgCount());
+    }
+
+    public int totalMsgCount() {
+        int tot = msgCount.get(NodeMsgType.JOIN);
+        tot+= msgCount.get(NodeMsgType.LEAVE);
+        tot+= msgCount.get(NodeMsgType.SEARCH);
+        tot+= msgCount.get(NodeMsgType.SEARCHRESPONSE);
+        return tot;
     }
 
     @Override

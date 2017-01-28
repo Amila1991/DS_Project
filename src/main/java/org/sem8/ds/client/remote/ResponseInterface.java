@@ -1,6 +1,7 @@
-package org.sem8.ds.rest.resource;
+package org.sem8.ds.client.remote;
 
-import org.sem8.ds.client.resource.RegisterResponseResource;
+import org.sem8.ds.rest.resource.CommonResponseResource;
+import org.sem8.ds.rest.resource.NodeResource;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ public interface ResponseInterface {
 
     void searchFileResult(Map<String, List<NodeResource>> resultMap);
 
+    void setTotalMsgCount(int totalMsgCount);
 
 
     enum UpdateType{

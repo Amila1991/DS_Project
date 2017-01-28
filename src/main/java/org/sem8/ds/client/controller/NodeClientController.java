@@ -1,6 +1,6 @@
 package org.sem8.ds.client.controller;
 
-import org.sem8.ds.rest.resource.ResponseInterface;
+import org.sem8.ds.client.remote.ResponseInterface;
 import org.sem8.ds.services.NodeService;
 import org.sem8.ds.services.exception.ServiceException;
 

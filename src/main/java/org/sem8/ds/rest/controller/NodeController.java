@@ -4,6 +4,7 @@ import org.sem8.ds.rest.resource.ExceptionMessageResource;
 import org.sem8.ds.rest.resource.NodeResource;
 import org.sem8.ds.services.NodeService;
 import org.sem8.ds.services.exception.ServiceException;
+import org.sem8.ds.util.constant.NodeConstant.NodeMsgType;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ public class NodeController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response receiveJoinRequest(NodeResource resource) {
+        nodeService.increaseMsgCount(NodeMsgType.JOIN);
         System.out.println(resource.getPort());
         return Response.status(200).entity(nodeService.receiveJoinRequest(resource)).build();
     }
@@ -38,6 +40,7 @@ public class NodeController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response receiveLeaveRequest(NodeResource resource) {
+        nodeService.increaseMsgCount(NodeMsgType.LEAVE);
         System.out.println(resource.getPort());
         return Response.status(200).entity(nodeService.receiveLeaveRequest(resource)).build();
     }
@@ -47,6 +50,7 @@ public class NodeController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response searchFileRequest(List<NodeResource> resource, @PathParam("file") String file, @PathParam("hop") int hop) {
+        nodeService.increaseMsgCount(NodeMsgType.SEARCH);
         System.out.println("Search request");
         try {
             return Response.status(200).entity(nodeService.searchFile(resource, file, hop)).build();
@@ -74,6 +78,7 @@ public class NodeController {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response searchFileResponse(Map<String, List<NodeResource>> result){
         System.out.println("Search response");
+        nodeService.increaseMsgCount(NodeMsgType.SEARCHRESPONSE);
         nodeService.receiveSearchResponse(result);
         return Response.status(200).build();
     }
