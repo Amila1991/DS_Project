@@ -254,6 +254,60 @@ public class NodeService {
             resourceList = new ArrayList<>(2);
             resourceList.add(new NodeResource(getIp(), getPort()));
             resourceList.add(new NodeResource(getIp(), getPort()));
+            searchMap.put(file, resourceList.get(0));
+            sendSearchFileRequest(resourceList, file, hop);
+        }
+        return responseResource;
+    }
+
+
+    /**
+     * serach file in this service & if didn't find send
+     *
+     * @param resourceList
+     * @param file
+     * @param hop
+     * @return
+     * @throws ServiceException
+     */
+    public SearchResponseResource searchSingleFile(List<NodeResource> resourceList, String file, int hop) throws ServiceException {
+        System.out.println("search " + hop);
+        SearchResponseResource responseResource = new SearchResponseResource();
+        if (resourceList != null) {
+            System.out.println(file + " " + resourceList.get(0).toString());
+            System.out.println("resourceList is not null");
+            if (searchMap.get(file) == null || !searchMap.get(file).equals(resourceList.get(0))) {
+                searchMap.put(file, resourceList.get(0));
+                System.out.println("true");
+
+                Map<String, List<NodeResource>> result = searchFileServiceWithHopCount(file);
+                hop--;
+                if (result != null && !result.isEmpty()) {
+                    System.out.println("result is not null");
+
+                    Client client = ClientBuilder.newClient();
+                    client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
+                    client.property(ClientProperties.READ_TIMEOUT, 1000);
+                    String host = NodeConstant.PROTOCOL + resourceList.get(0).getIp() + ":" +
+                            resourceList.get(0).getPort() + NodeConstant.REST_API;
+                    System.out.println(host);
+                    WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE +
+                            RestRequest.SEARCH_RESPONSE + "/" + hop);
+
+                    Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
+                            Entity.entity(result, MediaType.APPLICATION_JSON_TYPE));
+                    responseResource.setFileList(result);
+                } else {
+                    if (hop != 0)
+                        sendSearchFileRequest(resourceList, file, hop);
+                }
+            }
+        } else {
+            System.out.println("resourceList is null");
+            resourceList = new ArrayList<>(2);
+            resourceList.add(new NodeResource(getIp(), getPort()));
+            resourceList.add(new NodeResource(getIp(), getPort()));
+            searchMap.put(file, resourceList.get(0));
             sendSearchFileRequest(resourceList, file, hop);
         }
         return responseResource;

@@ -19,7 +19,7 @@ public class NodeClientController extends AbstractClientController {
     }
 
     public void searchFile(String file, int hop) throws ServiceException {
-        nodeService.searchFile(null, file, hop);
+        nodeService.searchSingleFile(null, file, hop);
     }
 
     public void pingNode() {

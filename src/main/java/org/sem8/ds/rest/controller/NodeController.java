@@ -53,7 +53,7 @@ public class NodeController {
         nodeService.increaseMsgCount(NodeMsgType.SEARCH);
         System.out.println("Search request");
         try {
-            return Response.status(200).entity(nodeService.searchFile(resource, file, hop)).build();
+            return Response.status(200).entity(nodeService.searchSingleFile(resource, file, hop)).build();
         } catch (ServiceException e) {
             return handleServiceException(e);
         }
