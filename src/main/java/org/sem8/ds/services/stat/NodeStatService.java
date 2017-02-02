@@ -67,7 +67,7 @@ public class NodeStatService {
         statResource.setAvgHop(summary.getMean());
         statResource.setStdHop(summary.getStandardDeviation());
 
-        System.out.println("No of Hops : " + summary.getN());
+      //  System.out.println("No of Hops : " + summary.getN());
 
         summary = latencyStat.getSummary();
         statResource.setMaxLatency((long) summary.getMax());
@@ -75,7 +75,7 @@ public class NodeStatService {
         statResource.setAvgLatency(summary.getMean());
         statResource.setStdLatency(summary.getStandardDeviation());
 
-        System.out.println("No of Latencies : " + summary.getN());
+      //  System.out.println("No of Latencies : " + summary.getN());
 
         statResource.setNodeDegree(nodeDegree);
 

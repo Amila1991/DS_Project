@@ -55,7 +55,7 @@ public class NodeController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response searchFileRequest(List<NodeResource> resource, @PathParam("file") String file, @PathParam("hop") int hop) {
         nodeStatService.increaseMsgCount(NodeMsgType.SEARCH);
-        System.out.println("Search request");
+       // System.out.println("Search request");
         try {
             return Response.status(200).entity(nodeService.searchSingleFile(resource, file, hop)).build();
         } catch (ServiceException e) {
@@ -81,7 +81,7 @@ public class NodeController {
     @Path(RestRequest.SEARCH_RESPONSE + "/{hop}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response searchFileResponse(Map<String, List<NodeResource>> result, @PathParam("hop") int hop){
-        System.out.println("Search response");
+      //  System.out.println("Search response");
         nodeStatService.increaseMsgCount(NodeMsgType.SEARCHRESPONSE);
         nodeService.receiveSearchResponse(result, hop);
         return Response.status(200).build();
