@@ -286,8 +286,6 @@ public class NodeService {
      */
     public SearchResponseResource searchSingleFile(List<NodeResource> resourceList, String file, int hop) throws ServiceException {
       //  System.out.println("search " + hop);
-        searchQueryStartedTime = System.currentTimeMillis();
-        searchQueryMaxHop = hop;
 
         SearchResponseResource responseResource = new SearchResponseResource();
         if (resourceList != null && new NodeResource(getIp(), getPort()).equals(resourceList.get(0))) {
@@ -548,6 +546,14 @@ public class NodeService {
 
     public static void setNodeService(NodeService nodeService) {
             NodeService.nodeService = nodeService;
+    }
+
+    public void setSearchQueryStartedTime(long searchQueryStartedTime) {
+        this.searchQueryStartedTime = searchQueryStartedTime;
+    }
+
+    public void setSearchQueryMaxHop(int searchQueryMaxHop) {
+        this.searchQueryMaxHop = searchQueryMaxHop;
     }
 
     public void setMyFileList(List<String> fileList) {

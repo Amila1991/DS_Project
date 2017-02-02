@@ -20,6 +20,8 @@ public class NodeClientController extends AbstractClientController {
     }
 
     public void searchFile(String file, int hop) throws ServiceException {
+        nodeService.setSearchQueryStartedTime(System.currentTimeMillis());
+        nodeService.setSearchQueryMaxHop(hop);
         nodeService.searchSingleFile(null, file, hop);
     }
 
