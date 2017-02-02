@@ -32,6 +32,7 @@ public class JettyServer {
     }
 
     public void startServer() throws Exception {
+        System.out.println("serverStarted " + server.isStarted());
         if (!server.isStarted()) {
             server.start();
         }

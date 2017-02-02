@@ -48,6 +48,12 @@ public class NodeConstant {
             public String toString() {
                 return "LEAVE";
             }
+        },
+        FORWARD {
+            @Override
+            public String toString() {
+                return "FORWARD";
+            }
         }
     }
 }

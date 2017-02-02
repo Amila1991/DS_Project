@@ -5,14 +5,16 @@ import org.sem8.ds.client.remote.ResponseInterface;
 import org.sem8.ds.rest.resource.*;
 import org.sem8.ds.client.remote.ResponseInterface.UpdateType;
 import org.sem8.ds.services.exception.ServiceException;
+import org.sem8.ds.services.stat.NodeStatService;
 import org.sem8.ds.util.FileList;
 import org.sem8.ds.util.constant.NodeConstant;
-import org.sem8.ds.util.constant.NodeConstant.NodeMsgType;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -26,27 +28,25 @@ public class NodeService {
     private String ip;
     private int port;
     private String username;
+
     private List<String> fileList = null;
     private Map<String, NodeResource> searchMap;
     private RoutingTable routingTable;
     private FileTable fileTable;
-
-    private Map<NodeMsgType, Integer> msgCount;
+    private long searchQueryStartedTime;
+    private int searchQueryMaxHop;
 
     private static NodeService nodeService;
 
     private ResponseInterface anInterface;
 
+    @Autowired
+    private NodeStatService nodeStatService;
+
     public void init() throws SocketException {
         searchMap = new HashMap<>();
         routingTable = RoutingTable.getInstance();
         fileTable = FileTable.getInstance();
-        msgCount = new HashMap<>();
-        msgCount.put(NodeMsgType.JOIN, 0);
-        msgCount.put(NodeMsgType.LEAVE, 0);
-        msgCount.put(NodeMsgType.SEARCH, 0);
-        msgCount.put(NodeMsgType.SEARCHRESPONSE, 0);
-
     }
 
     public GeneratedFileResponseResource generateFileList(int noofFiles) throws ServiceException {
@@ -170,16 +170,24 @@ public class NodeService {
 
         System.out.println("search request starting " + path);
 
-        NodeResource senderNode = resourceList.remove(1);
+        NodeResource senderNode = null;
+        if (resourceList.size() == 2) {
+            senderNode = resourceList.remove(1);
+        }
         resourceList.add(1, new NodeResource(getIp(), getPort()));
-        for (NodeResource resource : routingTable.getNodeList()) {
+      L1 : for (NodeResource resource : routingTable.getNodeList()) {
             System.out.println(resource.getIp() + " : " + resource.getPort());
-            if(resource.equals(senderNode)){
+            if(resource.equals(senderNode) || resource.equals(resourceList.get(0))){
                 System.out.println(resource.getIp() + " : " + resource.getPort() +" search sender");
-                continue;
+                continue L1;
             }
             host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
             WebTarget target = client.target(host).path(path);
+            try {
+                System.out.println(target.getUri().toURL().toString());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(resourceList, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
@@ -205,7 +213,7 @@ public class NodeService {
 
                         }
                     });
-
+            nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
         }//parseResponse(response, SearchResponseResource.class);
     }
 
@@ -219,8 +227,10 @@ public class NodeService {
      * @return
      * @throws ServiceException
      */
+/*
     public SearchResponseResource searchFile(List<NodeResource> resourceList, String file, int hop) throws ServiceException {
         System.out.println("search " + hop);
+
         SearchResponseResource responseResource = new SearchResponseResource();
         if (resourceList != null) {
             System.out.println(file + " " + resourceList.get(0).toString());
@@ -253,12 +263,12 @@ public class NodeService {
             System.out.println("resourceList is null");
             resourceList = new ArrayList<>(2);
             resourceList.add(new NodeResource(getIp(), getPort()));
-            resourceList.add(new NodeResource(getIp(), getPort()));
             searchMap.put(file, resourceList.get(0));
             sendSearchFileRequest(resourceList, file, hop);
         }
         return responseResource;
     }
+*/
 
 
     /**
@@ -272,8 +282,13 @@ public class NodeService {
      */
     public SearchResponseResource searchSingleFile(List<NodeResource> resourceList, String file, int hop) throws ServiceException {
         System.out.println("search " + hop);
+        searchQueryStartedTime = System.currentTimeMillis();
+        searchQueryMaxHop = hop;
+
         SearchResponseResource responseResource = new SearchResponseResource();
-        if (resourceList != null) {
+        if (resourceList != null && new NodeResource(getIp(), getPort()).equals(resourceList.get(0))) {
+
+        } else if (resourceList != null) {
             System.out.println(file + " " + resourceList.get(0).toString());
             System.out.println("resourceList is not null");
             if (searchMap.get(file) == null || !searchMap.get(file).equals(resourceList.get(0))) {
@@ -283,7 +298,7 @@ public class NodeService {
                 Map<String, List<NodeResource>> result = searchFileServiceWithHopCount(file);
                 hop--;
                 if (result != null && !result.isEmpty()) {
-                    System.out.println("result is not null");
+                   // System.out.println("result is not null");
 
                     Client client = ClientBuilder.newClient();
                     client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
@@ -296,6 +311,7 @@ public class NodeService {
 
                     Response response = target.request(MediaType.APPLICATION_JSON_TYPE).post(
                             Entity.entity(result, MediaType.APPLICATION_JSON_TYPE));
+                    nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
                     responseResource.setFileList(result);
                 } else {
                     if (hop != 0)
@@ -303,9 +319,9 @@ public class NodeService {
                 }
             }
         } else {
+            receiveSearchResponse(searchFileServiceWithHopCount(file), hop);
             System.out.println("resourceList is null");
             resourceList = new ArrayList<>(2);
-            resourceList.add(new NodeResource(getIp(), getPort()));
             resourceList.add(new NodeResource(getIp(), getPort()));
             searchMap.put(file, resourceList.get(0));
             sendSearchFileRequest(resourceList, file, hop);
@@ -336,6 +352,7 @@ public class NodeService {
                         public void failed(Throwable throwable) {
                             System.out.println("fail");
                             System.err.println(throwable.getMessage());
+                            nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() - 1);
                             routingTable.removeNeighbour(resource);
                             anInterface.updateRoutingTable(UpdateType.LEAVE, resource);
                         }
@@ -403,6 +420,8 @@ public class NodeService {
         responseResource.setIp(resource.getIp());
         responseResource.setPort(resource.getPort());
         responseResource.setErrorCode(0); // todo routingTable add error 9999
+        nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() + 1);
+        nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
         routingTable.addNeighBour(resource);
         anInterface.updateRoutingTable(UpdateType.JOIN, resource);
         return responseResource;
@@ -414,6 +433,8 @@ public class NodeService {
         responseResource.setIp(resource.getIp());
         responseResource.setPort(resource.getPort());
         responseResource.setErrorCode(0); // todo routingTable add error 9999
+        nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() - 1);
+        nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
         routingTable.removeNeighbour(resource);
         anInterface.updateRoutingTable(UpdateType.LEAVE, resource);
         return responseResource;
@@ -422,6 +443,10 @@ public class NodeService {
 
     public void receiveSearchResponse(Map<String, List<NodeResource>> resultListMap, int currentHop) {
         System.out.println("search result");
+        nodeStatService.addHop(searchQueryMaxHop - currentHop);
+        nodeStatService.addLatency(System.currentTimeMillis() - searchQueryStartedTime);
+        if (searchQueryMaxHop != currentHop)
+            nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
         Iterator<String> keyIterator= resultListMap.keySet().iterator();
         while (keyIterator.hasNext()) {
             String tempFile = keyIterator.next();
@@ -438,6 +463,7 @@ public class NodeService {
         if (response == null) {
             throw new ServiceException("response object is null");
         }
+        System.out.println("status " + response.getStatus());
         if (response.getStatus() >= 200 && response.getStatus() < 300) {
             return response.readEntity(entityType);
         } else {
@@ -526,19 +552,11 @@ public class NodeService {
 
     public void setAnInterface(ResponseInterface anInterface) {
         this.anInterface = anInterface;
+        nodeStatService.setAnInterface(anInterface);
     }
 
-    public void increaseMsgCount(NodeMsgType msgType) {
-        msgCount.put(msgType, msgCount.get(msgType)+1);
-        anInterface.setTotalMsgCount(totalMsgCount());
-    }
-
-    public int totalMsgCount() {
-        int tot = msgCount.get(NodeMsgType.JOIN);
-        tot+= msgCount.get(NodeMsgType.LEAVE);
-        tot+= msgCount.get(NodeMsgType.SEARCH);
-        tot+= msgCount.get(NodeMsgType.SEARCHRESPONSE);
-        return tot;
+    public NodeStatService getNodeStatService() {
+        return nodeStatService;
     }
 
     @Override

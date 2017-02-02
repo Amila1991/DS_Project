@@ -1,6 +1,7 @@
 package org.sem8.ds.client.controller;
 
 import org.sem8.ds.client.remote.ResponseInterface;
+import org.sem8.ds.client.resource.SearchStatResource;
 import org.sem8.ds.services.NodeService;
 import org.sem8.ds.services.exception.ServiceException;
 
@@ -28,5 +29,9 @@ public class NodeClientController extends AbstractClientController {
 
     public void setFileList(List<String> fileList) {
         nodeService.setMyFileList(fileList);
+    }
+
+    public SearchStatResource getStatistic(String userName){
+        return nodeService.getNodeStatService().generateStat(userName);
     }
 }

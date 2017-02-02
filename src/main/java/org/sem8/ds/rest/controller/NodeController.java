@@ -4,6 +4,7 @@ import org.sem8.ds.rest.resource.ExceptionMessageResource;
 import org.sem8.ds.rest.resource.NodeResource;
 import org.sem8.ds.services.NodeService;
 import org.sem8.ds.services.exception.ServiceException;
+import org.sem8.ds.services.stat.NodeStatService;
 import org.sem8.ds.util.constant.NodeConstant.NodeMsgType;
 import org.sem8.ds.util.constant.NodeConstant.RestRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +26,15 @@ public class NodeController {
     @Autowired
     NodeService nodeService;
 
+    @Autowired
+    NodeStatService nodeStatService;
+
     @POST
     @Path(RestRequest.JOIN)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response receiveJoinRequest(NodeResource resource) {
-        nodeService.increaseMsgCount(NodeMsgType.JOIN);
+        nodeStatService.increaseMsgCount(NodeMsgType.JOIN);
         System.out.println(resource.getPort());
         return Response.status(200).entity(nodeService.receiveJoinRequest(resource)).build();
     }
@@ -40,7 +44,7 @@ public class NodeController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response receiveLeaveRequest(NodeResource resource) {
-        nodeService.increaseMsgCount(NodeMsgType.LEAVE);
+        nodeStatService.increaseMsgCount(NodeMsgType.LEAVE);
         System.out.println(resource.getPort());
         return Response.status(200).entity(nodeService.receiveLeaveRequest(resource)).build();
     }
@@ -50,7 +54,7 @@ public class NodeController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response searchFileRequest(List<NodeResource> resource, @PathParam("file") String file, @PathParam("hop") int hop) {
-        nodeService.increaseMsgCount(NodeMsgType.SEARCH);
+        nodeStatService.increaseMsgCount(NodeMsgType.SEARCH);
         System.out.println("Search request");
         try {
             return Response.status(200).entity(nodeService.searchSingleFile(resource, file, hop)).build();
@@ -78,7 +82,7 @@ public class NodeController {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response searchFileResponse(Map<String, List<NodeResource>> result, @PathParam("hop") int hop){
         System.out.println("Search response");
-        nodeService.increaseMsgCount(NodeMsgType.SEARCHRESPONSE);
+        nodeStatService.increaseMsgCount(NodeMsgType.SEARCHRESPONSE);
         nodeService.receiveSearchResponse(result, hop);
         return Response.status(200).build();
     }
