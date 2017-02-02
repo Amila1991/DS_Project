@@ -318,7 +318,7 @@ public class NodeService {
                     nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
                     responseResource.setFileList(result);
                 } else {
-                    if (hop != 0)
+                    if (hop > 0)
                         sendSearchFileRequest(resourceList, file, hop);
                 }
             }
