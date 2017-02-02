@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -98,6 +97,7 @@ public class NodeService {
                            // System.out.println(resource.getIp() + ":" + resource.getPort() + "ADD");
                             CommonResponseResource responseResource = new CommonResponseResource();
                             responseResource.setResponseType(ResponseType.JOINOK);
+                            nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.JOIN);
                             responseResource.setIp(resource.getIp());
                             responseResource.setPort(resource.getPort());
                             anInterface.executeCommonResponse(responseResource);
@@ -107,6 +107,7 @@ public class NodeService {
                             System.err.println(throwable.getMessage());
                         }
                     });
+            nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
         }
     }
 
@@ -141,6 +142,7 @@ public class NodeService {
                         //    System.out.println(resource.getIp() + ":" + resource.getPort() + "REMOVE");
                             CommonResponseResource responseResource = new CommonResponseResource();
                             responseResource.setResponseType(ResponseType.LEAVEOK);
+                            nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.LEAVE);
                             responseResource.setIp(resource.getIp());
                             responseResource.setPort(resource.getPort());
                             anInterface.executeCommonResponse(responseResource);
@@ -150,6 +152,7 @@ public class NodeService {
                             System.err.println(throwable.getMessage());
                         }
                     });
+            nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
         }
     }
 
@@ -191,6 +194,7 @@ public class NodeService {
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(resourceList, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
+                            nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.SEARCHRESPONSE);
                             try {
                                // System.out.println("completed Search request");
                                 SearchResponseResource responseResource =
