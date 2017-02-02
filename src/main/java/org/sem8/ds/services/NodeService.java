@@ -319,7 +319,9 @@ public class NodeService {
                 }
             }
         } else {
-            receiveSearchResponse(searchFileServiceWithHopCount(file), hop);
+            Map<String, List<NodeResource>> fileList = searchFileServiceWithHopCount(file);
+            if (fileList != null && !fileList.isEmpty())
+                receiveSearchResponse(fileList, hop);
         //    System.out.println("resourceList is null");
             resourceList = new ArrayList<>(2);
             resourceList.add(new NodeResource(getIp(), getPort()));
