@@ -93,6 +93,7 @@ public class NodeService {
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
+                            nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() + 1);
                             routingTable.addNeighBour(resource);
                            // System.out.println(resource.getIp() + ":" + resource.getPort() + "ADD");
                             CommonResponseResource responseResource = new CommonResponseResource();
@@ -138,6 +139,7 @@ public class NodeService {
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(node, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
+                            nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() - 1);
                             routingTable.removeNeighbour(resource);
                         //    System.out.println(resource.getIp() + ":" + resource.getPort() + "REMOVE");
                             CommonResponseResource responseResource = new CommonResponseResource();
