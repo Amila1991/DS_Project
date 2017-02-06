@@ -15,7 +15,7 @@ public interface ResponseInterface {
 
     void updateRoutingTable(UpdateType updateType, NodeResource resource);
 
-    void searchFileResult(Map<String, List<NodeResource>> resultMap, int currentHop);
+    void searchFileResult(Map<String, List<NodeResource>> resultMap, int currentHop, long latency);
 
     void setTotalMsgCount(int totalMsgCount);
 

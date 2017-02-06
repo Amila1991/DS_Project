@@ -29,7 +29,7 @@ public class NodeService {
     private String username;
 
     private List<String> fileList = null;
-    private Map<String, NodeResource> searchMap;
+    private Map<String, List<NodeResource>> searchMap;
     private RoutingTable routingTable;
     private FileTable fileTable;
     private long searchQueryStartedTime;
@@ -80,6 +80,12 @@ public class NodeService {
         return parseResponse(response, CommonResponseResource.class);
     }
 
+    /**
+     * send join request all neighbours
+     *
+     * @param resourceList - neighbour list
+     * @throws ServiceException
+     */
     public void sendJoinRequestAll(List<NodeResource> resourceList) throws ServiceException {
         Client client = ClientBuilder.newClient();
         client.property(ClientProperties.CONNECT_TIMEOUT, 2000);
@@ -95,7 +101,7 @@ public class NodeService {
                         public void completed(Response response) {
                             nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() + 1);
                             routingTable.addNeighBour(resource);
-                           // System.out.println(resource.getIp() + ":" + resource.getPort() + "ADD");
+                            // System.out.println(resource.getIp() + ":" + resource.getPort() + "ADD");
                             CommonResponseResource responseResource = new CommonResponseResource();
                             responseResource.setResponseType(ResponseType.JOINOK);
                             nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.JOIN);
@@ -126,6 +132,11 @@ public class NodeService {
         return parseResponse(response, CommonResponseResource.class);
     }
 
+    /**
+     * send leave request to all neighbours
+     *
+     * @throws ServiceException
+     */
     public void sendLeaveRequestAll() throws ServiceException {
         Client client = ClientBuilder.newClient();
         client.property(ClientProperties.CONNECT_TIMEOUT, 2000);
@@ -141,7 +152,7 @@ public class NodeService {
                         public void completed(Response response) {
                             nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() - 1);
                             routingTable.removeNeighbour(resource);
-                        //    System.out.println(resource.getIp() + ":" + resource.getPort() + "REMOVE");
+                            //    System.out.println(resource.getIp() + ":" + resource.getPort() + "REMOVE");
                             CommonResponseResource responseResource = new CommonResponseResource();
                             responseResource.setResponseType(ResponseType.LEAVEOK);
                             nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.LEAVE);
@@ -160,11 +171,11 @@ public class NodeService {
 
 
     /**
-     * send search request for neighbours
+     * send search request for given neighbours. send to other neighbour to detail include following params.
      *
-     * @param resourceList
-     * @param file
-     * @param hop
+     * @param resourceList @NodeResource list. This list contain search start node detail and my details.
+     * @param file         search file value argument
+     * @param hop          current hop count.
      */
     public void sendSearchFileRequest(List<NodeResource> resourceList, String file, int hop) {
         Client client = ClientBuilder.newClient();
@@ -173,32 +184,28 @@ public class NodeService {
         String path = NodeConstant.NODE_SERVICE + RestRequest.SEARCH + "/" + file + "/" + hop;
         String host;
 
-       // System.out.println("search request starting " + path);
+        // System.out.println("search request starting " + path);
 
         NodeResource senderNode = null;
         if (resourceList.size() == 2) {
             senderNode = resourceList.remove(1);
         }
         resourceList.add(1, new NodeResource(getIp(), getPort()));
-      L1 : for (NodeResource resource : routingTable.getNodeList()) {
-           // System.out.println(resource.getIp() + " : " + resource.getPort());
-            if(resource.equals(senderNode) || resource.equals(resourceList.get(0))){
-               // System.out.println(resource.getIp() + " : " + resource.getPort() +" search sender");
+        L1:
+        for (NodeResource resource : routingTable.getNodeList()) {
+            // System.out.println(resource.getIp() + " : " + resource.getPort());
+            if (resource.equals(senderNode) || resource.equals(resourceList.get(0))) {
+                // System.out.println(resource.getIp() + " : " + resource.getPort() +" search sender");
                 continue L1;
             }
             host = NodeConstant.PROTOCOL + resource.getIp() + ":" + resource.getPort() + NodeConstant.REST_API;
             WebTarget target = client.target(host).path(path);
-            /*try {
-                System.out.println(target.getUri().toURL().toString());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }*/
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().post(
                     Entity.entity(resourceList, MediaType.APPLICATION_JSON_TYPE), new InvocationCallback<Response>() {
                         public void completed(Response response) {
                             nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.SEARCHRESPONSE);
                             try {
-                               // System.out.println("completed Search request");
+                                // System.out.println("completed Search request");
                                 SearchResponseResource responseResource =
                                         parseResponse(response, SearchResponseResource.class);
                                 Iterator<String> keyIterator = responseResource.getFileList().keySet().iterator();
@@ -206,17 +213,18 @@ public class NodeService {
                                     String file = keyIterator.next();
                                     for (NodeResource nodeResource :
                                             responseResource.getFileList().get(file)) {
-                                        fileTable.addFile(file, nodeResource);
+                                        if (routingTable.getNodeList().contains(nodeResource))
+                                            fileTable.addFile(file, nodeResource);
                                     }
                                 }
                             } catch (ServiceException e) {
-                                e.printStackTrace();
+                                System.err.println(e.getMessage());
                             }
 
                         }
 
                         public void failed(Throwable throwable) {
-
+                            // System.err.println(throwable.getMessage() +" Amila");
                         }
                     });
             nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
@@ -225,7 +233,7 @@ public class NodeService {
 
 
     /**
-     * serach file in this service & if didn't find send
+     * search file in this service(node) & if didn't find send search request to the other neighbours
      *
      * @param resourceList
      * @param file
@@ -278,38 +286,41 @@ public class NodeService {
 
 
     /**
-     * serach file in this service & if didn't find send
+     * search file in this service(node) & if didn't find send search request to the other neighbours. In case we find
+     * search file then didn't continue search from neighbour and send message to searcher.
      *
-     * @param resourceList
-     * @param file
-     * @param hop
-     * @return
+     * @param resourceList @NodeResource list. This list contain search start node detail and Who is neighbour sending
+     *                     this request to me
+     * @param file         search file value argument
+     * @param hop          requested neighbour hop count
+     * @return @SearchResponseResource this is response to the search request from me to the requester.
      * @throws ServiceException
      */
-    public SearchResponseResource searchSingleFile(List<NodeResource> resourceList, String file, int hop) throws ServiceException {
-      //  System.out.println("search " + hop);
+    public SearchResponseResource searchSingleFile(List<NodeResource> resourceList, String file, int hop)
+            throws ServiceException {
+        //  System.out.println("search " + hop);
 
         SearchResponseResource responseResource = new SearchResponseResource();
-        if (resourceList != null && new NodeResource(getIp(), getPort()).equals(resourceList.get(0))) {
-
-        } else if (resourceList != null) {
-          //  System.out.println(file + " " + resourceList.get(0).toString());
-          //  System.out.println("resourceList is not null");
-            if (searchMap.get(file) == null || !searchMap.get(file).equals(resourceList.get(0))) {
-                searchMap.put(file, resourceList.get(0));
-              //  System.out.println("true");
+        if (resourceList != null && !(new NodeResource(getIp(), getPort()).equals(resourceList.get(0)))) {
+            //  System.out.println(file + " " + resourceList.get(0).toString());
+            //  System.out.println("resourceList is not null");
+            if (searchMap.get(file) == null || !searchMap.get(file).contains(resourceList.get(0))) {
+                if (searchMap.get(file) == null)
+                    searchMap.put(file, new ArrayList<NodeResource>());
+                searchMap.get(file).add(resourceList.get(0));
+                //  System.out.println("true");
 
                 Map<String, List<NodeResource>> result = searchFileServiceWithHopCount(file);
                 hop--;
                 if (result != null && !result.isEmpty()) {
-                   // System.out.println("result is not null");
+                    // System.out.println("result is not null");
 
                     Client client = ClientBuilder.newClient();
                     client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
                     client.property(ClientProperties.READ_TIMEOUT, 1000);
                     String host = NodeConstant.PROTOCOL + resourceList.get(0).getIp() + ":" +
                             resourceList.get(0).getPort() + NodeConstant.REST_API;
-                //    System.out.println(host);
+                    //    System.out.println(host);
                     WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE +
                             RestRequest.SEARCH_RESPONSE + "/" + hop);
 
@@ -326,10 +337,12 @@ public class NodeService {
             Map<String, List<NodeResource>> fileList = searchFileServiceWithHopCount(file);
             if (fileList != null && !fileList.isEmpty())
                 receiveSearchResponse(fileList, hop);
-        //    System.out.println("resourceList is null");
+            //    System.out.println("resourceList is null");
             resourceList = new ArrayList<>(2);
             resourceList.add(new NodeResource(getIp(), getPort()));
-            searchMap.put(file, resourceList.get(0));
+            if (searchMap.get(file) == null)
+                searchMap.put(file, new ArrayList<NodeResource>());
+            searchMap.get(file).add(resourceList.get(0));
             sendSearchFileRequest(resourceList, file, hop);
         }
         return responseResource;
@@ -337,8 +350,8 @@ public class NodeService {
 
 
     /**
-     * ping neighbour nodes to check their availability
-     *
+     * ping neighbour nodes to check their availability. This is heartbeat check. if their node available then throw
+     * exception then we remove corresponding neighbour from routing table.
      */
     public void pingNeighbourNodes() {
         Client client = ClientBuilder.newClient();
@@ -350,16 +363,26 @@ public class NodeService {
             WebTarget target = client.target(host).path(NodeConstant.NODE_SERVICE + RestRequest.PING);
 
             Future<Response> response = target.request(MediaType.APPLICATION_JSON_TYPE).async().get(
-            new InvocationCallback<Response>() {
+                    new InvocationCallback<Response>() {
                         public void completed(Response response) {
                             //System.out.println("success");
                         }
 
                         public void failed(Throwable throwable) {
-                       //     System.out.println("fail");
-                       //     System.err.println(throwable.getMessage());
+                            System.err.println("fail");
+                            //     System.err.println(throwable.getMessage());
                             nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() - 1);
                             routingTable.removeNeighbour(resource);
+                            Iterator<String> iterator = fileTable.getFileMap().keySet().iterator();
+                            while (iterator.hasNext()) {
+                                String key = iterator.next();
+                                fileTable.getFileMap().get(key).remove(resource);
+                               /* if (fileTable.getFileMap().get(key) != null || fileTable.getFileMap().get(key).size() == 0) {
+                                    System.out.println("d");
+                                    fileTable.getFileMap().remove(key);
+                                    iterator.remove();
+                                }*/
+                            }
                             anInterface.updateRoutingTable(UpdateType.LEAVE, resource);
                         }
                     });
@@ -420,7 +443,7 @@ public class NodeService {
      * @return
      */
     public CommonResponseResource receiveJoinRequest(NodeResource resource) {
-    //    System.out.println("web Service Join");
+        //    System.out.println("web Service Join");
         CommonResponseResource responseResource = new CommonResponseResource();
         responseResource.setResponseType(ResponseType.JOINOK);
         responseResource.setIp(resource.getIp());
@@ -442,26 +465,35 @@ public class NodeService {
         nodeStatService.setNodeDegree(nodeStatService.getNodeDegree() - 1);
         nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
         routingTable.removeNeighbour(resource);
+        Iterator<String> iterator = fileTable.getFileMap().keySet().iterator();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            fileTable.getFileMap().get(key).remove(resource);
+            /*if (fileTable.getFileMap().get(key) != null || fileTable.getFileMap().get(key).size() == 0) {
+                fileTable.getFileMap().remove(key);
+            }*/
+        }
         anInterface.updateRoutingTable(UpdateType.LEAVE, resource);
         return responseResource;
     }
 
 
     public void receiveSearchResponse(Map<String, List<NodeResource>> resultListMap, int currentHop) {
-    //    System.out.println("search result");
+        //    System.out.println("search result");
         nodeStatService.addHop(searchQueryMaxHop - currentHop);
         nodeStatService.addLatency(System.currentTimeMillis() - searchQueryStartedTime);
         if (searchQueryMaxHop != currentHop)
             nodeStatService.increaseMsgCount(NodeConstant.NodeMsgType.FORWARD);
-        Iterator<String> keyIterator= resultListMap.keySet().iterator();
+        Iterator<String> keyIterator = resultListMap.keySet().iterator();
         while (keyIterator.hasNext()) {
             String tempFile = keyIterator.next();
-        //    System.out.println(tempFile);
-            if (!fileTable.checkContainFile(tempFile)){
+            //    System.out.println(tempFile);
+            if (!fileTable.checkContainFile(tempFile)) {
                 fileTable.initMyList(tempFile);
             }
         }
-        anInterface.searchFileResult(resultListMap, currentHop);
+        anInterface.searchFileResult(resultListMap, currentHop,
+                nodeStatService.getLatencyList().get(nodeStatService.getLatencyList().size() - 1));
     }
 
 
@@ -469,7 +501,7 @@ public class NodeService {
         if (response == null) {
             throw new ServiceException("response object is null");
         }
-       // System.out.println("status " + response.getStatus());
+        // System.out.println("status " + response.getStatus());
         if (response.getStatus() >= 200 && response.getStatus() < 300) {
             return response.readEntity(entityType);
         } else {
@@ -547,7 +579,7 @@ public class NodeService {
     }
 
     public static void setNodeService(NodeService nodeService) {
-            NodeService.nodeService = nodeService;
+        NodeService.nodeService = nodeService;
     }
 
     public void setSearchQueryStartedTime(long searchQueryStartedTime) {
@@ -559,7 +591,7 @@ public class NodeService {
     }
 
     public void setMyFileList(List<String> fileList) {
-        for (String file: fileList) {
+        for (String file : fileList) {
             fileTable.initMyList(file);
         }
     }
